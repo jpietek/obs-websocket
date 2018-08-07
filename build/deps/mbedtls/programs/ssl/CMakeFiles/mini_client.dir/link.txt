@@ -1,0 +1,1 @@
+/usr/bin/c++      CMakeFiles/mini_client.dir/mini_client.c.o CMakeFiles/mini_client.dir/mini_client_automoc.cpp.o  -o mini_client -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

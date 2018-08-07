@@ -1,0 +1,1 @@
+/usr/bin/c++      CMakeFiles/pk_verify.dir/pk_verify.c.o CMakeFiles/pk_verify.dir/pk_verify_automoc.cpp.o  -o pk_verify -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

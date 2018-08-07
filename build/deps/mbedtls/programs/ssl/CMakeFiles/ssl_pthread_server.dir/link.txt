@@ -1,0 +1,1 @@
+/usr/bin/c++      CMakeFiles/ssl_pthread_server.dir/ssl_pthread_server.c.o CMakeFiles/ssl_pthread_server.dir/ssl_pthread_server_automoc.cpp.o  -o ssl_pthread_server -rdynamic ../../library/libmbedtls.a -lpthread ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

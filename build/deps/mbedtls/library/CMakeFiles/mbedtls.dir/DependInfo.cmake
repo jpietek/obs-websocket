@@ -1,0 +1,45 @@
+# The set of languages for which implicit dependencies are needed:
+set(CMAKE_DEPENDS_LANGUAGES
+  "C"
+  "CXX"
+  )
+# The set of files for implicit dependencies of each language:
+set(CMAKE_DEPENDS_CHECK_C
+  "/home/jp/git/obs-websocket/deps/mbedtls/library/debug.c" "/home/jp/git/obs-websocket/build/deps/mbedtls/library/CMakeFiles/mbedtls.dir/debug.c.o"
+  "/home/jp/git/obs-websocket/deps/mbedtls/library/net_sockets.c" "/home/jp/git/obs-websocket/build/deps/mbedtls/library/CMakeFiles/mbedtls.dir/net_sockets.c.o"
+  "/home/jp/git/obs-websocket/deps/mbedtls/library/ssl_cache.c" "/home/jp/git/obs-websocket/build/deps/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_cache.c.o"
+  "/home/jp/git/obs-websocket/deps/mbedtls/library/ssl_ciphersuites.c" "/home/jp/git/obs-websocket/build/deps/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_ciphersuites.c.o"
+  "/home/jp/git/obs-websocket/deps/mbedtls/library/ssl_cli.c" "/home/jp/git/obs-websocket/build/deps/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_cli.c.o"
+  "/home/jp/git/obs-websocket/deps/mbedtls/library/ssl_cookie.c" "/home/jp/git/obs-websocket/build/deps/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_cookie.c.o"
+  "/home/jp/git/obs-websocket/deps/mbedtls/library/ssl_srv.c" "/home/jp/git/obs-websocket/build/deps/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_srv.c.o"
+  "/home/jp/git/obs-websocket/deps/mbedtls/library/ssl_ticket.c" "/home/jp/git/obs-websocket/build/deps/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_ticket.c.o"
+  "/home/jp/git/obs-websocket/deps/mbedtls/library/ssl_tls.c" "/home/jp/git/obs-websocket/build/deps/mbedtls/library/CMakeFiles/mbedtls.dir/ssl_tls.c.o"
+  )
+set(CMAKE_C_COMPILER_ID "GNU")
+
+# The include file search paths:
+set(CMAKE_C_TARGET_INCLUDE_PATH
+  "deps/mbedtls/library"
+  "../deps/mbedtls/library"
+  "../deps/mbedtls/include"
+  )
+set(CMAKE_DEPENDS_CHECK_CXX
+  "/home/jp/git/obs-websocket/build/deps/mbedtls/library/mbedtls_automoc.cpp" "/home/jp/git/obs-websocket/build/deps/mbedtls/library/CMakeFiles/mbedtls.dir/mbedtls_automoc.cpp.o"
+  )
+set(CMAKE_CXX_COMPILER_ID "GNU")
+
+# The include file search paths:
+set(CMAKE_CXX_TARGET_INCLUDE_PATH
+  "deps/mbedtls/library"
+  "../deps/mbedtls/library"
+  "../deps/mbedtls/include"
+  )
+
+# Targets to which this target links.
+set(CMAKE_TARGET_LINKED_INFO_FILES
+  "/home/jp/git/obs-websocket/build/deps/mbedtls/library/CMakeFiles/mbedx509.dir/DependInfo.cmake"
+  "/home/jp/git/obs-websocket/build/deps/mbedtls/library/CMakeFiles/mbedcrypto.dir/DependInfo.cmake"
+  )
+
+# Fortran module output directory.
+set(CMAKE_Fortran_TARGET_MODULE_DIR "")

@@ -1,0 +1,1 @@
+/usr/bin/c++      CMakeFiles/test_suite_camellia.dir/test_suite_camellia.c.o CMakeFiles/test_suite_camellia.dir/test_suite_camellia_automoc.cpp.o  -o test_suite_camellia -rdynamic ../library/libmbedtls.a ../library/libmbedx509.a ../library/libmbedcrypto.a 

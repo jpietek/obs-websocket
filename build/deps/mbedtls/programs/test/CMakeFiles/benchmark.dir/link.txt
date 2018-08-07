@@ -1,0 +1,1 @@
+/usr/bin/c++      CMakeFiles/benchmark.dir/benchmark.c.o CMakeFiles/benchmark.dir/benchmark_automoc.cpp.o  -o benchmark -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

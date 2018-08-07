@@ -1,0 +1,1 @@
+/usr/bin/c++      CMakeFiles/selftest.dir/selftest.c.o CMakeFiles/selftest.dir/selftest_automoc.cpp.o  -o selftest -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

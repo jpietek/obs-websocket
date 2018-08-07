@@ -1,0 +1,1 @@
+/usr/bin/c++      CMakeFiles/strerror.dir/strerror.c.o CMakeFiles/strerror.dir/strerror_automoc.cpp.o  -o strerror -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

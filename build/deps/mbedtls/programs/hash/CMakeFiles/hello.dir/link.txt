@@ -1,0 +1,1 @@
+/usr/bin/c++      CMakeFiles/hello.dir/hello.c.o CMakeFiles/hello.dir/hello_automoc.cpp.o  -o hello -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 
