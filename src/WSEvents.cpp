@@ -21,12 +21,22 @@
 
 #include <QTimer>
 #include <QPushButton>
+#include <QMutex>
 
 #include "Config.h"
 #include "Utils.h"
 #include "WSEvents.h"
 
 #include "obs-websocket.h"
+
+QHash<QString, obs_data_t*> WSEvents::audioMonitorLevel {
+};
+
+QHash<QString, char*> WSEvents::processedSourceThumbs {
+};
+
+QMutex WSEvents::thumbsLock {
+};
 
 bool transitionIsCut(obs_source_t* transition) {
     if (!transition)
@@ -75,6 +85,10 @@ WSEvents::WSEvents(WSServer* srv) {
     QTimer* statusTimer = new QTimer();
     connect(statusTimer, SIGNAL(timeout()),
         this, SLOT(StreamStatus()));
+    
+    connect(statusTimer, SIGNAL(timeout()), this, SLOT(UpdateAudioMonitor()));
+    connect(statusTimer, SIGNAL(timeout()), this, SLOT(NotifyThumbnails()));
+    
     pulse = false;
     connect(statusTimer, SIGNAL(timeout()),
         this, SLOT(Heartbeat()));
@@ -606,6 +620,46 @@ void WSEvents::OnExit() {
     broadcastUpdate("Exiting");
 }
 
+void WSEvents::NotifyThumbnails() {
+  if(processedSourceThumbs.empty()) {
+    return;
+  }
+  
+   OBSDataAutoRelease data = obs_data_create();
+   OBSDataAutoRelease sources = obs_data_create();
+   thumbsLock.lock();
+   QHash<QString, char*>::iterator i = processedSourceThumbs.begin();
+   while (i != processedSourceThumbs.end()) {
+      const char* sn = i.key().toUtf8();
+      char* tu = i.value();
+      blog(LOG_INFO, "source thumb to notify: %s %s", sn, tu);
+      obs_data_set_string(sources, sn, tu);
+      i = processedSourceThumbs.erase(i);
+   }
+   thumbsLock.unlock();
+   
+   obs_data_set_obj(data, "sources", sources);
+   
+   WSEvents::Instance->broadcastUpdate("ThumbnailNotify", data);
+}
+
+void WSEvents::UpdateAudioMonitor() {
+   if(audioMonitorLevel.empty()) {
+      return;
+   }
+  
+   OBSDataAutoRelease data = obs_data_create();
+   OBSDataAutoRelease sources = obs_data_create();
+   for (QHash<QString, obs_data_t*>::const_iterator it = audioMonitorLevel.cbegin(), 
+     end = audioMonitorLevel.cend(); it != end; ++it) {
+     const char* sourceName = it.key().toUtf8();
+     obs_data_t* audioLevels = it.value();
+     obs_data_set_obj(sources, sourceName, audioLevels);
+   }
+   obs_data_set_obj(data, "sources", sources);
+   WSEvents::Instance->broadcastUpdate("AudioMonitor", data);
+}
+
 /**
  * Emit every 2 seconds.
  *
@@ -859,7 +913,7 @@ void WSEvents::OnSceneItemDelete(void* param, calldata_t* data) {
     obs_data_set_string(fields, "scene-name", sceneName);
     obs_data_set_string(fields, "item-name", sceneItemName);
 
-    instance->broadcastUpdate("SceneItemRemoved", fields);
+    //instance->broadcastUpdate("SceneItemRemoved", fields);
 }
 
 /**

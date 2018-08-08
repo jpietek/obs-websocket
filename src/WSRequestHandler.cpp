@@ -24,6 +24,15 @@
 
 #include "WSRequestHandler.h"
 
+QHash<QString, obs_volmeter_t*> WSRequestHandler::audioMonitorMap {
+};
+
+QHash<QString, circlebuf*> WSRequestHandler::audioBufferMap {
+};
+
+QMutex WSRequestHandler::audioLock {
+};
+
 QHash<QString, void(*)(WSRequestHandler*)> WSRequestHandler::messageMap {
     { "GetVersion", WSRequestHandler::HandleGetVersion },
     { "GetAuthRequired", WSRequestHandler::HandleGetAuthRequired },
@@ -37,7 +46,6 @@ QHash<QString, void(*)(WSRequestHandler*)> WSRequestHandler::messageMap {
     { "SetCurrentScene", WSRequestHandler::HandleSetCurrentScene },
     { "GetCurrentScene", WSRequestHandler::HandleGetCurrentScene },
     { "GetSceneList", WSRequestHandler::HandleGetSceneList },
-
     { "SetSceneItemOrder", WSRequestHandler::HandleSetSceneItemOrder },
     { "SetSourceRender", WSRequestHandler::HandleSetSceneItemRender }, // Retrocompat
     { "SetSceneItemRender", WSRequestHandler::HandleSetSceneItemRender },
@@ -111,7 +119,25 @@ QHash<QString, void(*)(WSRequestHandler*)> WSRequestHandler::messageMap {
     { "GetTextFreetype2Properties", WSRequestHandler::HandleGetTextFreetype2Properties },
 
     { "GetBrowserSourceProperties", WSRequestHandler::HandleGetBrowserSourceProperties },
-    { "SetBrowserSourceProperties", WSRequestHandler::HandleSetBrowserSourceProperties }
+    { "SetBrowserSourceProperties", WSRequestHandler::HandleSetBrowserSourceProperties },
+  
+    // dynamic sources
+    { "AddBrowserSource", WSRequestHandler::HandleAddBrowserSource },
+    { "AddMediaSource", WSRequestHandler::HandleAddMediaSource },
+    { "RemoveSource", WSRequestHandler::HandleRemoveSource },
+    { "ClearSession", WSRequestHandler::HandleClearSession },
+    { "ClearScene", WSRequestHandler::HandleClearScene },
+    
+    // custom audio
+    { "PlayAudio", WSRequestHandler::PlayAudio },
+    { "StopAudio", WSRequestHandler::StopAudio },
+    
+    // custom outputs
+    { "SetupStreamingOutput", WSRequestHandler::SetupStreamingOutput },
+    { "AddCustomOutput", WSRequestHandler::AddCustomOutput },
+    { "StopCustomOutput", WSRequestHandler::StopCustomOutput },
+    { "RestartOBS", WSRequestHandler::HandleRestartOBS }
+    
 };
 
 QSet<QString> WSRequestHandler::authNotRequired {

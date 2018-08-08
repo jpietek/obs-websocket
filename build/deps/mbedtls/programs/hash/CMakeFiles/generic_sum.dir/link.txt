@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/generic_sum.dir/generic_sum.c.o CMakeFiles/generic_sum.dir/generic_sum_automoc.cpp.o  -o generic_sum -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

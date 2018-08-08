@@ -1,1 +1,0 @@
-set(AM_OLD_COMPILE_SETTINGS " ~~~ /home/jp/git/obs-websocket/build/deps/mbedtls/library;/home/jp/git/obs-websocket/deps/mbedtls/library;/home/jp/git/obs-websocket/deps/mbedtls/include ~~~  ~~~ FALSE ~~~ ")

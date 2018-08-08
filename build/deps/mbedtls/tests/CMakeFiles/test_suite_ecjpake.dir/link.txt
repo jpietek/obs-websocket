@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/test_suite_ecjpake.dir/test_suite_ecjpake.c.o CMakeFiles/test_suite_ecjpake.dir/test_suite_ecjpake_automoc.cpp.o  -o test_suite_ecjpake -rdynamic ../library/libmbedtls.a ../library/libmbedx509.a ../library/libmbedcrypto.a 

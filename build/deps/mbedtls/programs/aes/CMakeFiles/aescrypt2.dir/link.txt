@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/aescrypt2.dir/aescrypt2.c.o CMakeFiles/aescrypt2.dir/aescrypt2_automoc.cpp.o  -o aescrypt2 -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

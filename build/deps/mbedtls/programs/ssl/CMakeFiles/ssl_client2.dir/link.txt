@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/ssl_client2.dir/ssl_client2.c.o CMakeFiles/ssl_client2.dir/ssl_client2_automoc.cpp.o  -o ssl_client2 -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

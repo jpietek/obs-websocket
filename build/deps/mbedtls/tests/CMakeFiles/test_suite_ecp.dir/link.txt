@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/test_suite_ecp.dir/test_suite_ecp.c.o CMakeFiles/test_suite_ecp.dir/test_suite_ecp_automoc.cpp.o  -o test_suite_ecp -rdynamic ../library/libmbedtls.a ../library/libmbedx509.a ../library/libmbedcrypto.a 

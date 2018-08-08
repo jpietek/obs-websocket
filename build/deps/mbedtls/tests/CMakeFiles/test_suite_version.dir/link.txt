@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/test_suite_version.dir/test_suite_version.c.o CMakeFiles/test_suite_version.dir/test_suite_version_automoc.cpp.o  -o test_suite_version -rdynamic ../library/libmbedtls.a ../library/libmbedx509.a ../library/libmbedcrypto.a 

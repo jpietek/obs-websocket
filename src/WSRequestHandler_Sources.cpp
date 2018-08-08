@@ -1,7 +1,9 @@
 #include <QString>
 #include "Utils.h"
+#include <cstdlib>
 
 #include "WSRequestHandler.h"
+#include "WSEvents.h"
 
 /**
 * List all sources available in the running OBS instance
@@ -22,6 +24,7 @@ void WSRequestHandler::HandleGetSourcesList(WSRequestHandler* req) {
     auto sourceEnumProc = [](void* privateData, obs_source_t* source) -> bool {
         obs_data_array_t* sourcesArray = (obs_data_array_t*)privateData;
 
+	blog(LOG_INFO, "before source data");
         OBSDataAutoRelease sourceData = obs_data_create();
         obs_data_set_string(sourceData, "name", obs_source_get_name(source));
         obs_data_set_string(sourceData, "typeId", obs_source_get_id(source));
@@ -49,15 +52,23 @@ void WSRequestHandler::HandleGetSourcesList(WSRequestHandler* req) {
             typeString = "unknown";
             break;
         }
+        
+        blog(LOG_INFO, "got source type: %s", typeString.toUtf8());
+        
         obs_data_set_string(sourceData, "type", typeString.toUtf8());
 
+	blog(LOG_INFO, "before sources push");
         obs_data_array_push_back(sourcesArray, sourceData);
         return true;
     };
+    blog(LOG_INFO, "before enum sources");
     obs_enum_sources(sourceEnumProc, sourcesArray);
 
+    blog(LOG_INFO, "after enum sources");
     OBSDataAutoRelease response = obs_data_create();
+    blog(LOG_INFO, "before set sources array");
     obs_data_set_array(response, "sources", sourcesArray);
+    blog(LOG_INFO, "before send resp");
     req->SendOKResponse(response);
 }
 
@@ -160,13 +171,11 @@ void WSRequestHandler::HandleGetVolume(WSRequestHandler* req) {
 
     QString sourceName = obs_data_get_string(req->data, "source");
     if (!sourceName.isEmpty()) {
-        OBSSourceAutoRelease source = obs_get_source_by_name(sourceName.toUtf8());
-
+        obs_source_t* source = obs_get_source_by_name(sourceName.toUtf8());
         OBSDataAutoRelease response = obs_data_create();
         obs_data_set_string(response, "name", sourceName.toUtf8());
         obs_data_set_double(response, "volume", obs_source_get_volume(source));
         obs_data_set_bool(response, "muted", obs_source_muted(source));
-
         req->SendOKResponse(response);
     }
     else {

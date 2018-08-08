@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/ecdsa.dir/ecdsa.c.o CMakeFiles/ecdsa.dir/ecdsa_automoc.cpp.o  -o ecdsa -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/cert_app.dir/cert_app.c.o CMakeFiles/cert_app.dir/cert_app_automoc.cpp.o  -o cert_app -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

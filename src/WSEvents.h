@@ -40,7 +40,13 @@ class WSEvents : public QObject {
     const char* GetStreamingTimecode();
     uint64_t GetRecordingTime();
     const char* GetRecordingTimecode();
-
+    
+    static QHash<QString, obs_data_t*> audioMonitorLevel;
+    static QHash<QString, char*> processedSourceThumbs;
+    static QMutex thumbsLock;
+    
+    void broadcastUpdate(const char* updateType, obs_data_t* additionalFields);
+   
     bool HeartbeatIsActive;
 
   private slots:
@@ -50,6 +56,8 @@ class WSEvents : public QObject {
     void TransitionDurationChanged(int ms);
     void SelectedSceneChanged(
         QListWidgetItem* current, QListWidgetItem* prev);
+    void UpdateAudioMonitor();
+    void NotifyThumbnails();
 
   private:
     WSServer* _srv;
@@ -66,9 +74,6 @@ class WSEvents : public QObject {
 
     uint64_t _lastBytesSent;
     uint64_t _lastBytesSentTime;
-
-    void broadcastUpdate(const char* updateType,
-        obs_data_t* additionalFields);
 
     void OnSceneChange();
     void OnSceneListChange();

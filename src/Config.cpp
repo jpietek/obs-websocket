@@ -161,6 +161,15 @@ void Config::SetPassword(QString password) {
 }
 
 bool Config::CheckAuth(QString response) {
+  
+    // here we can add a method to authorize in RTC for tellyo version of obs-websocketo
+  
+    size_t base64_size = 0;
+//    char* cred_unbased = (char*)bzalloc(64);
+//    mbedtls_base64_decode( (unsigned char*)response.toUtf8().constData(), response.length(), &base64_size, cred_unbased, 32);
+    
+//     mbedtls_sha256
+    
     // Concatenate auth secret with the challenge sent to the user
     QString challengeAndResponse = "";
     challengeAndResponse += Secret;
@@ -175,7 +184,7 @@ bool Config::CheckAuth(QString response) {
 
     // Encode the SHA256 hash to Base64
     char* expectedResponse = (char*)bzalloc(64);
-    size_t base64_size = 0;
+    
     mbedtls_base64_encode(
         (unsigned char*)expectedResponse, 64, &base64_size,
         hash, 32);

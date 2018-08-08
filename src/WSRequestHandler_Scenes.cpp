@@ -95,7 +95,7 @@ void WSRequestHandler::HandleSetSceneItemOrder(WSRequestHandler* req) {
         req->SendErrorResponse("requested scene doesn't exist");
         return;
     }
-
+    
     OBSDataArrayAutoRelease items = obs_data_get_array(req->data, "items");
     if (!items) {
         req->SendErrorResponse("sceneItem order not specified");
@@ -108,12 +108,15 @@ void WSRequestHandler::HandleSetSceneItemOrder(WSRequestHandler* req) {
     newOrder.reserve(count);
     for (size_t i = 0; i < count; i++) {
         OBSDataAutoRelease item = obs_data_array_item(items, i);
-        OBSSceneItemAutoRelease sceneItem = Utils::GetSceneItemFromItem(scene, item);
+        obs_sceneitem_t* sceneItem = Utils::GetSceneItemFromItem(scene, item);
         if (!sceneItem) {
             req->SendErrorResponse("Invalid sceneItem id or name in order");
+	    blog(LOG_INFO, "can't get scene item");
             return;
         }
-        for (size_t j = 0; j < i; j++) {
+        
+        blog(LOG_INFO, "got scene item");
+        /*for (size_t j = 0; j < i; j++) {
             if (sceneItem == newOrder[j]) {
                 req->SendErrorResponse("Duplicate sceneItem in specified order");
                 for (size_t i = 0; i < count; i++) {
@@ -121,10 +124,12 @@ void WSRequestHandler::HandleSetSceneItemOrder(WSRequestHandler* req) {
                 }
                 return;
             }
-        }
+        }*/
+        
         newOrder.push_back(sceneItem);
     }
 
+    
     if (obs_scene_reorder_items(obs_scene_from_source(scene), newOrder.data(), count)) {
         req->SendOKResponse();
     }

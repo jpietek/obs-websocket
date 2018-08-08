@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/udp_proxy.dir/udp_proxy.c.o CMakeFiles/udp_proxy.dir/udp_proxy_automoc.cpp.o  -o udp_proxy -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/test_suite_blowfish.dir/test_suite_blowfish.c.o CMakeFiles/test_suite_blowfish.dir/test_suite_blowfish_automoc.cpp.o  -o test_suite_blowfish -rdynamic ../library/libmbedtls.a ../library/libmbedx509.a ../library/libmbedcrypto.a 

@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/key_app_writer.dir/key_app_writer.c.o CMakeFiles/key_app_writer.dir/key_app_writer_automoc.cpp.o  -o key_app_writer -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

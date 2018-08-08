@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/test_suite_ecdsa.dir/test_suite_ecdsa.c.o CMakeFiles/test_suite_ecdsa.dir/test_suite_ecdsa_automoc.cpp.o  -o test_suite_ecdsa -rdynamic ../library/libmbedtls.a ../library/libmbedx509.a ../library/libmbedcrypto.a 

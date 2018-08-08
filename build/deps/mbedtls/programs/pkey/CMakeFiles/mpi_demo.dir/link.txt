@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/mpi_demo.dir/mpi_demo.c.o CMakeFiles/mpi_demo.dir/mpi_demo_automoc.cpp.o  -o mpi_demo -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

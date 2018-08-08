@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/key_app.dir/key_app.c.o CMakeFiles/key_app.dir/key_app_automoc.cpp.o  -o key_app -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

@@ -24,11 +24,21 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <QSet>
 #include <QWebSocket>
 #include <QWebSocketServer>
+#include <QMutex>
 
 #include <obs.hpp>
 #include <obs-frontend-api.h>
 
 #include "obs-websocket.h"
+
+#include "circlebuf.h"
+
+struct SourceThumbData {
+   const char* url;
+   char* source_name;
+   char* image_id;
+   bool isMedia;
+};
 
 class WSRequestHandler : public QObject {
   Q_OBJECT
@@ -38,6 +48,7 @@ class WSRequestHandler : public QObject {
     ~WSRequestHandler();
     void processIncomingMessage(QString textMessage);
     bool hasField(QString name);
+    
 
   private:
     QWebSocket* _client;
@@ -52,7 +63,11 @@ class WSRequestHandler : public QObject {
 
     static QHash<QString, void(*)(WSRequestHandler*)> messageMap;
     static QSet<QString> authNotRequired;
-
+    
+    static QHash<QString, obs_volmeter_t*> audioMonitorMap;
+    static QHash<QString, circlebuf*> audioBufferMap;
+    static QMutex audioLock;
+    
     static void HandleGetVersion(WSRequestHandler* req);
     static void HandleGetAuthRequired(WSRequestHandler* req);
     static void HandleAuthenticate(WSRequestHandler* req);
@@ -139,6 +154,35 @@ class WSRequestHandler : public QObject {
     static void HandleGetTextFreetype2Properties(WSRequestHandler* req);
     static void HandleSetBrowserSourceProperties(WSRequestHandler* req);
     static void HandleGetBrowserSourceProperties(WSRequestHandler* req);
+    
+    // sources
+    static void HandleAddMediaSource(WSRequestHandler* req);
+    static void HandleAddBrowserSource(WSRequestHandler* req);
+    static void HandleRemoveSource(WSRequestHandler* req);
+    static void HandleClearSession(WSRequestHandler* req);
+    static void HandleClearScene(WSRequestHandler* req);
+    static void ClearScene(const char*);
+    static bool RemoveSource(void* p, obs_scene_item* item);
+    static void AddSource(void *_data, obs_scene_t *scene);
+    static void HandleGetSourceImage(SourceThumbData* data);
+    
+    // outputs
+    static void SetupStreamingOutput(WSRequestHandler* req);
+    static void AddCustomOutput(WSRequestHandler* req);
+    static void StopCustomOutput(WSRequestHandler* req);
+    static void HandleRestartOBS(WSRequestHandler* req);
+    
+    // audio
+    static void PlayAudio(WSRequestHandler* req);
+    static void StopAudio(WSRequestHandler* req);
+    
+    static bool TurnOffAudioMonitor(obs_scene_t *scene, obs_sceneitem_t *item, void *p);
+    static bool TurnOnAudioMonitor(obs_scene_t *scene, obs_sceneitem_t *item, void *p);
+    static bool TurnOffSourceAudio(void *p, obs_source *source);
+    static void HandleVolumeLevel(void *data, 
+	const float magnitude[MAX_AUDIO_CHANNELS], 
+	const float peak[MAX_AUDIO_CHANNELS],
+	const float inputPeak[MAX_AUDIO_CHANNELS]);
 };
 
 #endif // WSPROTOCOL_H

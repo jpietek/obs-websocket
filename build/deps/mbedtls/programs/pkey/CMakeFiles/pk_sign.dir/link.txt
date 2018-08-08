@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/pk_sign.dir/pk_sign.c.o CMakeFiles/pk_sign.dir/pk_sign_automoc.cpp.o  -o pk_sign -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

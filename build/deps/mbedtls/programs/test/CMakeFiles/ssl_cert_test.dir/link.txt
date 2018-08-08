@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/ssl_cert_test.dir/ssl_cert_test.c.o CMakeFiles/ssl_cert_test.dir/ssl_cert_test_automoc.cpp.o  -o ssl_cert_test -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

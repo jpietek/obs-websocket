@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/cert_write.dir/cert_write.c.o CMakeFiles/cert_write.dir/cert_write_automoc.cpp.o  -o cert_write -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 

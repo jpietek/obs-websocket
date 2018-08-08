@@ -1,1 +1,0 @@
-/usr/bin/c++      CMakeFiles/dtls_client.dir/dtls_client.c.o CMakeFiles/dtls_client.dir/dtls_client_automoc.cpp.o  -o dtls_client -rdynamic ../../library/libmbedtls.a ../../library/libmbedx509.a ../../library/libmbedcrypto.a 
