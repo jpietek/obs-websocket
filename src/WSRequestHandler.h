@@ -176,6 +176,7 @@ class WSRequestHandler : public QObject {
     static bool TurnOffAudioMonitor(obs_scene_t *scene, obs_sceneitem_t *item, void *p);
     static bool TurnOnAudioMonitor(obs_scene_t *scene, obs_sceneitem_t *item, void *p);
     static bool TurnOffSourceAudio(void *p, obs_source *source);
+    static bool TurnOnSourceAudio(const char* sourceName, bool output);
     static void HandleVolumeLevel(void *data, 
 	const float magnitude[MAX_AUDIO_CHANNELS], 
 	const float peak[MAX_AUDIO_CHANNELS],
