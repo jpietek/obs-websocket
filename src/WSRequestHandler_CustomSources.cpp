@@ -57,7 +57,7 @@ void WSRequestHandler::HandleGetSourceImage(SourceThumbData* data) {
   
   int ret = system(cmd.c_str());
   if(ret > 0) {
-    blog(LOG_INFO, "failed to create thumbnail for source: %s", data->url);
+    blog(LOG_INFO, "failed to create thumbnail for source: %s", cmd.c_str());
     return;
   }
   
