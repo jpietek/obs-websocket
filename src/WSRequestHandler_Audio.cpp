@@ -64,12 +64,7 @@ bool WSRequestHandler::TurnOnAudioMonitor(obs_scene_t *scene, obs_sceneitem_t *i
     obs_source_set_monitoring_type(source, (obs_monitoring_type)1);
   }
   
-  struct circlebuf* buf = (circlebuf*)bzalloc(sizeof(circlebuf));
-  circlebuf_reserve(buf, 64 * sizeof(double));
-  circlebuf_ensure_capacity(buf);
-  
   WSRequestHandler::audioLock.lock();
-  WSRequestHandler::audioBufferMap.insert(sourceName, buf);
   
   obs_data_t* data = obs_data_create();
   obs_data_set_string(data, "sourceName", sourceName);

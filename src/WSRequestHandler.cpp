@@ -27,9 +27,6 @@
 QHash<QString, obs_volmeter_t*> WSRequestHandler::audioMonitorMap {
 };
 
-QHash<QString, circlebuf*> WSRequestHandler::audioBufferMap {
-};
-
 QMutex WSRequestHandler::audioLock {
 };
 

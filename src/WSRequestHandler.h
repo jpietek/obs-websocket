@@ -27,11 +27,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <QMutex>
 
 #include <obs.hpp>
-#include <obs-frontend-api.h>
+#include <os-frontend-api.h>
 
 #include "obs-websocket.h"
-
-#include "circlebuf.h"
 
 struct SourceThumbData {
    const char* url;
@@ -65,7 +63,6 @@ class WSRequestHandler : public QObject {
     static QSet<QString> authNotRequired;
     
     static QHash<QString, obs_volmeter_t*> audioMonitorMap;
-    static QHash<QString, circlebuf*> audioBufferMap;
     static QMutex audioLock;
     
     static void HandleGetVersion(WSRequestHandler* req);

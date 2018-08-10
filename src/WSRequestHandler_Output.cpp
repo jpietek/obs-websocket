@@ -161,7 +161,7 @@ void WSRequestHandler::AddCustomOutput(WSRequestHandler* req) {
 void WSRequestHandler::StopCustomOutput(WSRequestHandler* req) {
   obs_output_t* out = obs_get_output_by_name("obs");
   obs_output_stop(out);
-  req->SendOKResponse(nullptr);
+  req->SendOKResponse();
 }
 
 void WSRequestHandler::HandleRestartOBS(WSRequestHandler* req) {

@@ -57,7 +57,7 @@ void WSRequestHandler::HandleGetSourceImage(SourceThumbData* data) {
   
   int ret = system(cmd.c_str());
   if(ret > 0) {
-    blog(LOG_INFO, "failed to create thumbnail for browser source: %s", data->url);
+    blog(LOG_INFO, "failed to create thumbnail for source: %s", data->url);
     return;
   }
   
@@ -126,7 +126,7 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
   char* id = (char*) malloc(32 * sizeof(char));
   GenerateRandom(id, 32);
   src_thumb_data->image_id = id;
-  src_thumb_data->url = input_url;
+  src_thumb_data->url = strdup(input_url);
   src_thumb_data->isMedia = true;
   
   blog(LOG_INFO, "before get media source image thread");
@@ -221,7 +221,7 @@ void WSRequestHandler::HandleAddBrowserSource(WSRequestHandler* req) {
   blog(LOG_INFO, "rand_image_id: %s", rand_image_id);
   
   SourceThumbData* src_thumb_data = (struct SourceThumbData*) malloc(sizeof(struct SourceThumbData));
-  src_thumb_data->url = url;
+  src_thumb_data->url = strdup(url);
   src_thumb_data->image_id = rand_image_id;
   char* src_name_t = (char*) malloc(sizeof(source_name));
   strcpy(src_name_t, source_name);
