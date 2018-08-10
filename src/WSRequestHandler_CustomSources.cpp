@@ -133,7 +133,7 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
   std::thread t1(WSRequestHandler::HandleGetSourceImage, src_thumb_data);
   t1.detach();
   
-  obs_source_t* previewSource = obs_frontend_get_current_preview_scene();
+  /*obs_source_t* previewSource = obs_frontend_get_current_preview_scene();
   if(previewSource != nullptr) {
     const char* previewSceneName = obs_source_get_name(previewSource);
     blog(LOG_INFO, "add media: %s", previewSceneName, sceneName);
@@ -146,8 +146,9 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
        WSRequestHandler::TurnOnSourceAudio(sourceName, output);
        obs_source_release(programScene);
     }
-  }
-  obs_source_release(previewSource);
+    obs_source_release(previewSource);
+  }*/
+  
   blog(LOG_INFO, "before media source release");
   obs_source_release(src);
   
