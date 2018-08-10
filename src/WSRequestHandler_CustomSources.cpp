@@ -57,7 +57,7 @@ void WSRequestHandler::HandleGetSourceImage(SourceThumbData* data) {
   
   int ret = system(cmd.c_str());
   if(ret > 0) {
-    blog(LOG_INFO, "failed to create thumbnail for source: %s", cmd.c_str());
+    blog(LOG_INFO, "failed to create thumbnail for source: %s", data->url);
     return;
   }
   
@@ -83,10 +83,10 @@ void WSRequestHandler::HandleGetSourceImage(SourceThumbData* data) {
 void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
   blog(LOG_INFO, "inside add scene");
   
-  const char* sceneName = obs_data_get_string(req->data, "sceneName");
-  const char* sourceName = obs_data_get_string(req->data, "sourceName");
+  const char* scene_name = obs_data_get_string(req->data, "sceneName");
+  const char* source_name = obs_data_get_string(req->data, "sourceName");
   
-  obs_source_t* existing_source = obs_get_source_by_name(sourceName);
+  obs_source_t* existing_source = obs_get_source_by_name(source_name);
   if(existing_source != nullptr) {
     blog(LOG_INFO, "source already exists: %s", obs_source_get_name(existing_source));
     obs_source_release(existing_source);
@@ -106,12 +106,12 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
   obs_data_set_bool(source_settings, "hw_decode", true);
   obs_data_set_bool(source_settings, "clear_on_media_end", false);
   obs_data_set_string(source_settings, "input", input_url);
-  obs_data_set_bool(source_settings, "restart_on_activate", true);
+  obs_data_set_bool(source_settings, "restart_on_activate", false);
   obs_data_set_int(source_settings, "zoom", zoom);
   
-  blog(LOG_INFO, "source created:  %s", sourceName);
-  obs_source_t* src = obs_source_create("ffmpeg_source", sourceName, source_settings, NULL);
-  obs_scene_t* new_scene = obs_scene_from_source(obs_get_source_by_name(sceneName));
+  blog(LOG_INFO, "source created:  %s", source_name);
+  obs_source_t* src = obs_source_create("ffmpeg_source", source_name, source_settings, NULL);
+  obs_scene_t* new_scene = obs_scene_from_source(obs_get_source_by_name(scene_name));
   
   AddSourceData data;
   data.source = src;
@@ -120,8 +120,8 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
   obs_scene_atomic_update(new_scene, AddSource, &data);
   
   SourceThumbData* src_thumb_data = (struct SourceThumbData*) malloc(sizeof(struct SourceThumbData));
-  src_thumb_data->source_name = (char *)malloc(sizeof(sourceName));
-  strcpy(src_thumb_data->source_name, sourceName);
+  src_thumb_data->source_name = (char *)malloc(sizeof(source_name));
+  strcpy(src_thumb_data->source_name, source_name);
   
   char* id = (char*) malloc(32 * sizeof(char));
   GenerateRandom(id, 32);
@@ -133,27 +133,11 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
   std::thread t1(WSRequestHandler::HandleGetSourceImage, src_thumb_data);
   t1.detach();
   
-  /*obs_source_t* previewSource = obs_frontend_get_current_preview_scene();
-  if(previewSource != nullptr) {
-    const char* previewSceneName = obs_source_get_name(previewSource);
-    blog(LOG_INFO, "add media: %s", previewSceneName, sceneName);
-    if(strcmp(previewSceneName, sceneName) == 0) {
-       obs_source_t* programScene = obs_frontend_get_current_scene();
-       const char* programSceneName = obs_source_get_name(programScene);
-       
-       blog(LOG_INFO, "add media program scene: %s", programSceneName);
-       bool output = (programSceneName  != nullptr && strcmp(programSceneName, sceneName) == 0) ? true : false;
-       WSRequestHandler::TurnOnSourceAudio(sourceName, output);
-       obs_source_release(programScene);
-    }
-    obs_source_release(previewSource);
-  }*/
-  
   blog(LOG_INFO, "before media source release");
   obs_source_release(src);
   
   OBSDataAutoRelease resp = obs_data_create();
-  obs_data_set_string(resp, "sourceName", sourceName);
+  obs_data_set_string(resp, "sourceName", source_name);
   req->SendOKResponse(resp);
 }
 
