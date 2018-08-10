@@ -141,12 +141,13 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
        obs_source_t* programScene = obs_frontend_get_current_scene();
        const char* programSceneName = obs_source_get_name(programScene);
        
-        blog(LOG_INFO, "add media program scene: %s", programSceneName);
+       blog(LOG_INFO, "add media program scene: %s", programSceneName);
        bool output = (programSceneName  != nullptr && strcmp(programSceneName, sceneName) == 0) ? true : false;
        WSRequestHandler::TurnOnSourceAudio(sourceName, output);
+       obs_source_release(programScene);
     }
   }
-  
+  obs_source_release(previewSource);
   blog(LOG_INFO, "before media source release");
   obs_source_release(src);
   
