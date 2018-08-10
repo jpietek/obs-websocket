@@ -50,7 +50,12 @@ bool WSRequestHandler::TurnOnAudioMonitor(obs_scene_t *scene, obs_sceneitem_t *i
   
   obs_data_t* audio_opts = (obs_data_t*) p;
   obs_source_t* source = obs_sceneitem_get_source(item);
-  const char* sourceName = obs_source_get_name(source);
+  
+  return WSRequestHandler::TurnOnSourceAudioMonitor(source, audio_opts);
+}
+
+bool WSRequestHandler::TurnOnSourceAudioMonitor(obs_source_t* source, obs_data_t* audio_opts) {
+   const char* sourceName = obs_source_get_name(source);
   
   if(obs_source_audio_pending(source)) {
     blog(LOG_INFO, "no audio for source: %s", sourceName);
@@ -75,8 +80,9 @@ bool WSRequestHandler::TurnOnAudioMonitor(obs_scene_t *scene, obs_sceneitem_t *i
   obs_volmeter_add_callback(volmeter, HandleVolumeLevel, data);
   WSRequestHandler::audioMonitorMap.insert(sourceName, volmeter);
   WSRequestHandler::audioLock.unlock();
-  
+
   return true;
+
 }
 
 bool WSRequestHandler::TurnOffSourceAudio(void *p, obs_source* source) {

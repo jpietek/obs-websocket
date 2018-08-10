@@ -132,7 +132,38 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
   blog(LOG_INFO, "before get media source image thread");
   std::thread t1(WSRequestHandler::HandleGetSourceImage, src_thumb_data);
   t1.detach();
-  
+
+  obs_source_t* previewScene = obs_frontend_get_current_preview_scene();
+  obs_source_t* programScene = obs_frontend_get_current_scene();
+  OBSDataAutoRelease audio_opts = obs_data_create();
+
+  bool audioMonitorAdded = false;
+  if(previewScene != nullptr) {
+    const char* previewSceneName = obs_source_get_name(previewScene);
+    blog(LOG_INFO, "add media preview name: %s", previewSceneName, scene_name);
+    if(strcmp(previewSceneName, scene_name) == 0 && !WSRequestHandler::audioMonitorMap.empty()) {
+ 
+       const char* programSceneName = obs_source_get_name(programScene);
+
+       blog(LOG_INFO, "add media program scene: %s", programSceneName);
+       bool output = (programScene != nullptr && strcmp(programSceneName, scene_name) == 0) ? true : false;
+       obs_data_set_bool(audio_opts, "output", output);
+       WSRequestHandler::TurnOnSourceAudioMonitor(src, audio_opts);
+       audioMonitorAdded = true;
+    }
+  } /*else if(programScene != nullptr && strcmp(obs_source_get_name(programScene), scene_name) == 0 
+      && !WSRequestHandler::audioMonitorMap.empty() && !audioMonitorAdded) {
+       obs_data_set_bool(audio_opts, "output", true);
+       WSRequestHandler::TurnOnSourceAudioMonitor(src, audio_opts);
+
+  }*/
+
+  if(previewScene != nullptr)
+    obs_source_release(previewScene);
+
+  if(programScene != nullptr)
+    obs_source_release(programScene);
+
   blog(LOG_INFO, "before media source release");
   obs_source_release(src);
   
