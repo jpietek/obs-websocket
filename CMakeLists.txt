@@ -22,6 +22,7 @@ set(obs-websocket_SOURCES
 	src/obs-websocket.cpp
 	src/WSServer.cpp
 	src/WSRequestHandler.cpp
+	src/WSRequestHandler_Audio.cpp
 	src/WSRequestHandler_General.cpp
 	src/WSRequestHandler_Profiles.cpp
 	src/WSRequestHandler_Recording.cpp
@@ -30,8 +31,10 @@ set(obs-websocket_SOURCES
 	src/WSRequestHandler_Scenes.cpp
 	src/WSRequestHandler_SceneItems.cpp
 	src/WSRequestHandler_Sources.cpp
+	src/WSRequestHandler_CustomSources.cpp
 	src/WSRequestHandler_Streaming.cpp
 	src/WSRequestHandler_StudioMode.cpp
+	src/WSRequestHandler_Output.cpp
 	src/WSRequestHandler_Transitions.cpp
 	src/WSEvents.cpp
 	src/Config.cpp
@@ -55,7 +58,7 @@ add_library(obs-websocket MODULE
 add_dependencies(obs-websocket mbedcrypto)
 
 include_directories( 
-	"${LIBOBS_INCLUDE_DIR}/../UI/obs-frontend-api"
+        "${LIBOBS_INCLUDE_DIR}/../UI/obs-frontend-api"
 	${Qt5Core_INCLUDES}
 	${Qt5WebSockets_INCLUDES}
 	${Qt5Widgets_INCLUDES}

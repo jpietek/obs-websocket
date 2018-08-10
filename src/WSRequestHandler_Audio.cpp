@@ -105,11 +105,6 @@ bool WSRequestHandler::TurnOffAudioMonitor(obs_scene_t *scene, obs_sceneitem_t *
   return true;
 }
 
-/*bool WSRequestHandler::TurnOffSourceAudio(void* p, obs_source* source) {
-  obs_source_set_monitoring_type(source, (obs_monitoring_type)0);
-  return true;
-}*/
-
 void WSRequestHandler::HandleVolumeLevel(void *data,
 	const float magnitude[MAX_AUDIO_CHANNELS],
 	const float peak[MAX_AUDIO_CHANNELS],
@@ -121,9 +116,8 @@ void WSRequestHandler::HandleVolumeLevel(void *data,
 	
 	obs_data_t* levels = obs_data_create();
 	const char* sourceName = obs_data_get_string((obs_data_t*)data, "sourceName");
-	circlebuf* buf = WSRequestHandler::audioBufferMap[sourceName];
-	double peakLinear = pow(6.5f, peak[1] / 20.0f);
-	double inputPeakLinear = pow(6.5f, inputPeak[1] / 20.0f);
+	double peakLinear = pow(10.0f, peak[1] / 20.0f);
+	double inputPeakLinear = pow(10.0f, inputPeak[1] / 20.0f);
 	obs_data_set_double(levels, "peak", peakLinear);
 	obs_data_set_double(levels, "input peak", inputPeakLinear);
 	

@@ -155,7 +155,7 @@ void WSRequestHandler::AddCustomOutput(WSRequestHandler* req) {
   const char *error = obs_output_get_last_error(out);
   blog(LOG_INFO, "start error: %s", error);
    
-  req->SendOKResponse(nullptr);
+  req->SendOKResponse();
 }
 
 void WSRequestHandler::StopCustomOutput(WSRequestHandler* req) {

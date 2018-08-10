@@ -27,7 +27,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <QMutex>
 
 #include <obs.hpp>
-#include <os-frontend-api.h>
+#include <obs-frontend-api.h>
 
 #include "obs-websocket.h"
 
