@@ -8,15 +8,15 @@
 void WSRequestHandler::PlayAudio(WSRequestHandler* req) {
   const char* name = obs_data_get_string(req->data, "sceneName");
   obs_source_t* s = obs_get_source_by_name(name);
-  obs_source_set_enabled(s, true);
   obs_source_set_muted(s, false);
-  obs_source_addref(s);
   
   blog(LOG_INFO, "switch audio monitor source: %s", name);
   obs_enum_sources(TurnOffSourceAudio, nullptr);
   
   obs_source_t* programSource = obs_frontend_get_current_scene();
   const char* programName = obs_source_get_name(programSource);
+  obs_source_release(programSource);
+  
   blog(LOG_INFO, "compare scene with program: %s %s", name, programName);
   OBSData audio_opts = obs_data_create();
   if(strcmp(name, programName) == 0) {
@@ -28,16 +28,17 @@ void WSRequestHandler::PlayAudio(WSRequestHandler* req) {
   }
   
   blog(LOG_INFO, "turn on audio monitor");
-  obs_scene_enum_items(obs_scene_from_source(s), TurnOnAudioMonitor, audio_opts);
-  obs_source_release(s);
+  obs_scene_t* scene = obs_scene_from_source(s);
+  obs_scene_enum_items(scene, TurnOnAudioMonitor, audio_opts);
+  obs_scene_release(scene);
   WSRequestHandler::audioMonitorStarted = true;
   req->SendOKResponse(nullptr);
 }
 
 void WSRequestHandler::StopAudio(WSRequestHandler* req) {
+  WSRequestHandler::audioMonitorStarted = false;
   const char* name = obs_data_get_string(req->data, "sceneName");
   obs_source_t* s = obs_get_source_by_name(name);
-  obs_source_addref(s);
   blog(LOG_INFO, "switch audio monitor source: %s", name);
   obs_scene_enum_items(obs_scene_from_source(s), TurnOffAudioMonitor, nullptr);
   obs_source_release(s);
@@ -58,10 +59,10 @@ bool WSRequestHandler::TurnOnAudioMonitor(obs_scene_t *scene, obs_sceneitem_t *i
 bool WSRequestHandler::TurnOnSourceAudioMonitor(obs_source_t* source, obs_data_t* audio_opts) {
    const char* sourceName = obs_source_get_name(source);
   
-  if(obs_source_audio_pending(source)) {
+  /*if(obs_source_audio_pending(source)) {
     blog(LOG_INFO, "no audio for source: %s", sourceName);
     return true;
-  }
+  }*/
   
   blog(LOG_INFO, "switch audio monitor source: %s", sourceName);
   if(obs_data_get_bool(audio_opts, "output")) {
@@ -83,7 +84,6 @@ bool WSRequestHandler::TurnOnSourceAudioMonitor(obs_source_t* source, obs_data_t
   WSRequestHandler::audioLock.unlock();
 
   return true;
-
 }
 
 bool WSRequestHandler::TurnOffSourceAudio(void *p, obs_source* source) {

@@ -160,7 +160,7 @@ class WSRequestHandler : public QObject {
     static void HandleClearSession(WSRequestHandler* req);
     static void HandleClearScene(WSRequestHandler* req);
     static void ClearScene(const char*);
-    static bool RemoveSource(void* p, obs_scene_item* item);
+    static bool RemoveSource(void* p, obs_source_t* src);
     static void AddSource(void *_data, obs_scene_t *scene);
     static void HandleGetSourceImage(SourceThumbData* data);
     

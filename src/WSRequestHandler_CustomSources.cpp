@@ -95,7 +95,7 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
   }
   obs_source_release(existing_source);
   
-  OBSData source_settings = obs_data_create();
+  OBSDataAutoRelease source_settings = obs_data_create();
   const char* input_url = obs_data_get_string(req->data, "url");
 
   long zoom = obs_data_get_int(req->data, "zoom");
@@ -117,7 +117,9 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
   data.source = src;
   data.visible = true;
   
+  obs_enter_graphics();
   obs_scene_atomic_update(new_scene, AddSource, &data);
+  obs_leave_graphics();
   
   SourceThumbData* src_thumb_data = (struct SourceThumbData*) malloc(sizeof(struct SourceThumbData));
   src_thumb_data->source_name = (char *)malloc(sizeof(source_name));
@@ -136,7 +138,6 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
   obs_source_t* previewScene = obs_frontend_get_current_preview_scene();
   obs_source_t* programScene = obs_frontend_get_current_scene();
   OBSDataAutoRelease audio_opts = obs_data_create();
-
   
   if(WSRequestHandler::audioMonitorStarted) {
     bool audioMonitorAdded = false;
@@ -144,7 +145,7 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
     if(previewScene != nullptr) {
       const char* previewSceneName = obs_source_get_name(previewScene);
       blog(LOG_INFO, "add media preview name: %s", previewSceneName, scene_name);
-      if(strcmp(previewSceneName, scene_name) == 0 && !WSRequestHandler::audioMonitorMap.empty()) {
+      if(strcmp(previewSceneName, scene_name) == 0 /*&& !WSRequestHandler::audioMonitorMap.empty()*/) {
 	const char* programSceneName = obs_source_get_name(programScene);
 
 	blog(LOG_INFO, "add media program scene: %s", programSceneName);
@@ -154,7 +155,7 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
 	audioMonitorAdded = true;
       }
     } else if(programScene != nullptr && strcmp(obs_source_get_name(programScene), scene_name) == 0 
-      && !WSRequestHandler::audioMonitorMap.empty() && !audioMonitorAdded) {
+      /*&& !WSRequestHandler::audioMonitorMap.empty()*/ && !audioMonitorAdded) {
        obs_data_set_bool(audio_opts, "output", true);
        WSRequestHandler::TurnOnSourceAudioMonitor(src, audio_opts);
     }
@@ -186,11 +187,11 @@ void WSRequestHandler::HandleRemoveSource(WSRequestHandler* req) {
   blog(LOG_INFO, "inside remove source");
   
   const char* source_name = obs_data_get_string(req->data, "sourceName");
-  OBSSourceAutoRelease s = obs_get_source_by_name(source_name);
-  
+  obs_source_t* s = obs_get_source_by_name(source_name);
   TurnOffSourceAudio(nullptr, s);
+  obs_source_release(s);
+  
   obs_source_remove(s);
-   
   req->SendOKResponse(nullptr);
 }
 
@@ -248,8 +249,15 @@ void WSRequestHandler::HandleAddBrowserSource(WSRequestHandler* req) {
   data.source = browser;
   data.visible = true;
   
+  obs_enter_graphics();
   obs_scene_atomic_update(new_scene, AddSource, &data);
+  obs_leave_graphics();
+  
   char* rand_image_id = (char*)malloc(32 * sizeof(char));
+  
+  blog(LOG_INFO, "before browser source release");
+  obs_source_release(browser);
+  
   GenerateRandom(rand_image_id, 32);
   blog(LOG_INFO, "rand_image_id: %s", rand_image_id);
   
@@ -265,8 +273,7 @@ void WSRequestHandler::HandleAddBrowserSource(WSRequestHandler* req) {
   std::thread t1(WSRequestHandler::HandleGetSourceImage, src_thumb_data);
   t1.detach();
   
-  blog(LOG_INFO, "before browser source release");
-  obs_source_release(browser);
+
   
   OBSDataAutoRelease resp = obs_data_create();
   obs_data_set_string(resp, "sourceName", source_name);
@@ -274,15 +281,11 @@ void WSRequestHandler::HandleAddBrowserSource(WSRequestHandler* req) {
 }
 
 void WSRequestHandler::HandleClearSession(WSRequestHandler* req) {
-  char scenes[][8] = {"Scene 1", "Scene 2", "Scene 3", "Scene 4", "Scene 5", "Scene 6", "Scene 7", "Scene 8"};
-  for(int i = 0; i < 8; i++) {
-    WSRequestHandler::ClearScene(scenes[i]);
-  }
+  obs_enum_sources(RemoveSource, nullptr);
   req->SendOKResponse();
 }
 
-bool WSRequestHandler::RemoveSource(void* p, obs_scene_item* item) {
-  obs_source_t* src = obs_sceneitem_get_source(item);
+bool WSRequestHandler::RemoveSource(void* p, obs_source_t* src) {
   TurnOffSourceAudio(nullptr, src);
   obs_source_remove(src);
   return true;
@@ -290,7 +293,8 @@ bool WSRequestHandler::RemoveSource(void* p, obs_scene_item* item) {
 
 void WSRequestHandler::ClearScene(const char* name) {
    auto removeSceneItemSource = [](obs_scene_t* scene, obs_sceneitem_t* item, void* params) -> bool {
-      RemoveSource(nullptr, item);
+      obs_source_t* s = obs_sceneitem_get_source(item);
+      RemoveSource(nullptr, s);
       return true;
   };
   OBSScene scene = obs_scene_from_source(obs_get_source_by_name(name));
@@ -302,3 +306,4 @@ void WSRequestHandler::HandleClearScene(WSRequestHandler* req) {
   WSRequestHandler::ClearScene(scene_name);
   req->SendOKResponse(nullptr);
 }
+

@@ -30,6 +30,8 @@ QHash<QString, obs_volmeter_t*> WSRequestHandler::audioMonitorMap {
 QMutex WSRequestHandler::audioLock {
 };
 
+bool WSRequestHandler::audioMonitorStarted = false;
+
 QHash<QString, void(*)(WSRequestHandler*)> WSRequestHandler::messageMap {
     { "GetVersion", WSRequestHandler::HandleGetVersion },
     { "GetAuthRequired", WSRequestHandler::HandleGetAuthRequired },
