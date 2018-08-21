@@ -64,6 +64,7 @@ class WSRequestHandler : public QObject {
     
     static QHash<QString, obs_volmeter_t*> audioMonitorMap;
     static QMutex audioLock;
+    static bool audioMonitorStarted;
     
     static void HandleGetVersion(WSRequestHandler* req);
     static void HandleGetAuthRequired(WSRequestHandler* req);

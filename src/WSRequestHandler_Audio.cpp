@@ -30,6 +30,7 @@ void WSRequestHandler::PlayAudio(WSRequestHandler* req) {
   blog(LOG_INFO, "turn on audio monitor");
   obs_scene_enum_items(obs_scene_from_source(s), TurnOnAudioMonitor, audio_opts);
   obs_source_release(s);
+  WSRequestHandler::audioMonitorStarted = true;
   req->SendOKResponse(nullptr);
 }
 
