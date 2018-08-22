@@ -31,10 +31,16 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "obs-websocket.h"
 
-struct SourceThumbData {
-   const char* url;
-   char* source_name;
-   char* image_id;
+class SourceThumbData : public QObject {
+  Q_OBJECT
+  
+ public:
+   explicit SourceThumbData();
+   ~SourceThumbData();
+   
+   QString url;
+   QString source_name;
+   QString image_id;
    bool isMedia;
 };
 

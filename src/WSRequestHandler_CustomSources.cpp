@@ -7,6 +7,8 @@
 #include <thread>
 #include <chrono>
 
+#include <QHostInfo>
+
 #include "WSRequestHandler.h"
 #include "WSEvents.h"
 
@@ -24,60 +26,46 @@ QMutex browserLock {
 QMutex mediaSourceLock {
 };
 
-void GenerateRandom(char* id, int len) {
-    static const char alphanum[] =
-        "0123456789"
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "abcdefghijklmnopqrstuvwxyz";
+QString GetRandomString(int len) {
+   const QString possibleCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
 
-    for (int i = 0; i < len; ++i) {
-        id[i] = alphanum[rand() % (sizeof(alphanum) - 1)];
-    }
-    
-    id[len] = '\0';
-    blog(LOG_INFO, "img id: %s", id);
+   QString randomString;
+   for(int i=0; i<len; ++i)
+   {
+       int index = qrand() % possibleCharacters.length();
+       QChar nextChar = possibleCharacters.at(index);
+       randomString.append(nextChar);
+   }
+   return randomString;
 }
 
 void WSRequestHandler::HandleGetSourceImage(SourceThumbData* data) {
-  std::string cmd;
+  blog(LOG_INFO, "inside get source image");
+  QString cmd;
   
   if(!data->isMedia) {
-    cmd += "DISPLAY=:0 python /apps/tools/screenshot.py ";
-    cmd += data->url;
-    cmd += " ";
-    cmd += data->image_id;
-    cmd += ".png";
+    cmd = "DISPLAY=:0 python /apps/tools/screenshot.py " + data->url
+      + " " + data->image_id + ".png";
   } else {
-    cmd += "ffmpeg -i ";
-    cmd += data->url;
-    cmd += " -vframes 1 -filter scale='640:-1' /var/www/html/thumbs/";
-    cmd += data->image_id;
-    cmd += ".jpg";
+    cmd = "ffmpeg -i " + data->url + " -vframes 1 -filter scale='640:-1' /var/www/html/thumbs/" + data->image_id;
+    + ".jpg";
   }
   
-  int ret = system(cmd.c_str());
+  int ret = system(cmd.toUtf8());
   if(ret > 0) {
     blog(LOG_INFO, "failed to create thumbnail for source: %s", data->url);
     return;
   }
   
-  std::string url = "http://";
-  char* hostname = (char*) malloc(32 * sizeof(char));
-  hostname[31] = '\0';
-  gethostname(hostname, 31*sizeof(char));
-  url += hostname;
-  url += ".aws-dev.intranet/thumbs/";
-  url += data->image_id;
-  data->isMedia ? url += ".jpg" : url += ".png";
-  blog(LOG_INFO, "image url: %s", url.c_str());
+  QString url = "http://" + QHostInfo::localHostName() 
+    + ".aws-dev.intranet/thumbs/" 
+    + data->image_id + (data->isMedia ? ".jpg" : ".png");
+    
+  blog(LOG_INFO, "image url: %s", url.toUtf8());
   
-  char* url_t = (char*) malloc(sizeof(char) * strlen(url.c_str()));
-  strcpy(url_t, strdup(url.c_str()));
   WSEvents::thumbsLock.lock();
-  WSEvents::processedSourceThumbs.insert(data->source_name, url_t);
+  WSEvents::processedSourceThumbs.insert(data->source_name.toUtf8(), url);
   WSEvents::thumbsLock.unlock();
-  
-  free(data);
 }
 
 void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
@@ -121,14 +109,15 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
   obs_scene_atomic_update(new_scene, AddSource, &data);
   obs_leave_graphics();
   
-  SourceThumbData* src_thumb_data = (struct SourceThumbData*) malloc(sizeof(struct SourceThumbData));
-  src_thumb_data->source_name = (char *)malloc(sizeof(source_name));
-  strcpy(src_thumb_data->source_name, source_name);
+  blog(LOG_INFO, "before src thumb data struct");
   
-  char* id = (char*) malloc(32 * sizeof(char));
-  GenerateRandom(id, 32);
-  src_thumb_data->image_id = id;
-  src_thumb_data->url = strdup(input_url);
+  SourceThumbData* src_thumb_data = new SourceThumbData();
+  
+  src_thumb_data->source_name = source_name;
+  QString rand = GetRandomString(32);
+  blog(LOG_INFO, "source name rand it: %s", rand.toUtf8());
+  src_thumb_data->image_id = rand;
+  src_thumb_data->url = input_url;
   src_thumb_data->isMedia = true;
   
   blog(LOG_INFO, "before get media source image thread");
@@ -253,27 +242,18 @@ void WSRequestHandler::HandleAddBrowserSource(WSRequestHandler* req) {
   obs_scene_atomic_update(new_scene, AddSource, &data);
   obs_leave_graphics();
   
-  char* rand_image_id = (char*)malloc(32 * sizeof(char));
-  
   blog(LOG_INFO, "before browser source release");
   obs_source_release(browser);
   
-  GenerateRandom(rand_image_id, 32);
-  blog(LOG_INFO, "rand_image_id: %s", rand_image_id);
-  
-  SourceThumbData* src_thumb_data = (struct SourceThumbData*) malloc(sizeof(struct SourceThumbData));
-  src_thumb_data->url = strdup(url);
-  src_thumb_data->image_id = rand_image_id;
-  char* src_name_t = (char*) malloc(sizeof(source_name));
-  strcpy(src_name_t, source_name);
-  src_thumb_data->source_name = src_name_t;
+  SourceThumbData* src_thumb_data = new SourceThumbData();
+  src_thumb_data->url = url;
+  src_thumb_data->image_id = GetRandomString(32);
+  src_thumb_data->source_name = source_name;
   src_thumb_data->isMedia = false;
   
   blog(LOG_INFO, "before get source image thread");
   std::thread t1(WSRequestHandler::HandleGetSourceImage, src_thumb_data);
   t1.detach();
-  
-
   
   OBSDataAutoRelease resp = obs_data_create();
   obs_data_set_string(resp, "sourceName", source_name);
@@ -306,4 +286,3 @@ void WSRequestHandler::HandleClearScene(WSRequestHandler* req) {
   WSRequestHandler::ClearScene(scene_name);
   req->SendOKResponse(nullptr);
 }
-

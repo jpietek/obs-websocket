@@ -32,7 +32,7 @@
 QHash<QString, obs_data_t*> WSEvents::audioMonitorLevel {
 };
 
-QHash<QString, char*> WSEvents::processedSourceThumbs {
+QHash<QString, QString> WSEvents::processedSourceThumbs {
 };
 
 QMutex WSEvents::thumbsLock {
@@ -628,10 +628,10 @@ void WSEvents::NotifyThumbnails() {
    OBSDataAutoRelease data = obs_data_create();
    OBSDataAutoRelease sources = obs_data_create();
    thumbsLock.lock();
-   QHash<QString, char*>::iterator i = processedSourceThumbs.begin();
+   QHash<QString, QString>::iterator i = processedSourceThumbs.begin();
    while (i != processedSourceThumbs.end()) {
       const char* sn = i.key().toUtf8();
-      char* tu = i.value();
+      const char* tu = i.value().toUtf8();
       blog(LOG_INFO, "source thumb to notify: %s %s", sn, tu);
       obs_data_set_string(sources, sn, tu);
       i = processedSourceThumbs.erase(i);
