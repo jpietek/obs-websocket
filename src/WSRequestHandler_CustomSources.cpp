@@ -131,8 +131,6 @@ void WSRequestHandler::AddSource(void *_data, obs_scene_t *scene)
    AddSourceData* data = (AddSourceData*)_data;
    OBSSceneItem sceneitem;
    sceneitem = obs_scene_add(scene, data->source);
-   obs_frontend_event_cb();
-   obs_frontend_add_event_callback();
    obs_sceneitem_set_visible(sceneitem, data->visible);
 }
 
