@@ -1,6 +1,3 @@
-#include "Utils.h"
-#include <cstdlib>
-
 #include "WSRequestHandler.h"
 #include "WSEvents.h"
 #include "math.h"
@@ -58,11 +55,6 @@ bool WSRequestHandler::TurnOnAudioMonitor(obs_scene_t *scene, obs_sceneitem_t *i
 
 bool WSRequestHandler::TurnOnSourceAudioMonitor(obs_source_t* source, obs_data_t* audio_opts) {
    const char* sourceName = obs_source_get_name(source);
-  
-  /*if(obs_source_audio_pending(source)) {
-    blog(LOG_INFO, "no audio for source: %s", sourceName);
-    return true;
-  }*/
   
   blog(LOG_INFO, "switch audio monitor source: %s", sourceName);
   if(obs_data_get_bool(audio_opts, "output")) {

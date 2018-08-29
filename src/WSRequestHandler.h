@@ -25,24 +25,12 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <QWebSocket>
 #include <QWebSocketServer>
 #include <QMutex>
+#include <QThread>
 
 #include <obs.hpp>
 #include <obs-frontend-api.h>
 
 #include "obs-websocket.h"
-
-class SourceThumbData : public QObject {
-  Q_OBJECT
-  
- public:
-   explicit SourceThumbData();
-   ~SourceThumbData();
-   
-   QString url;
-   QString source_name;
-   QString image_id;
-   bool isMedia;
-};
 
 class WSRequestHandler : public QObject {
   Q_OBJECT
@@ -52,7 +40,6 @@ class WSRequestHandler : public QObject {
     ~WSRequestHandler();
     void processIncomingMessage(QString textMessage);
     bool hasField(QString name);
-    
 
   private:
     QWebSocket* _client;
@@ -168,7 +155,6 @@ class WSRequestHandler : public QObject {
     static void ClearScene(const char*);
     static bool RemoveSource(void* p, obs_source_t* src);
     static void AddSource(void *_data, obs_scene_t *scene);
-    static void HandleGetSourceImage(SourceThumbData* data);
     
     // outputs
     static void SetupStreamingOutput(WSRequestHandler* req);
@@ -191,4 +177,4 @@ class WSRequestHandler : public QObject {
 	const float inputPeak[MAX_AUDIO_CHANNELS]);
 };
 
-#endif // WSPROTOCOL_H
+#endif

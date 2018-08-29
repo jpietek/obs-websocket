@@ -1,16 +1,9 @@
-#include <QString>
-#include <QImage>
-#include <QFile>
-#include "Utils.h"
-#include <unistd.h>
-#include <math.h>
-#include <thread>
-#include <chrono>
-
 #include <QHostInfo>
+#include <QString>
 
 #include "WSRequestHandler.h"
 #include "WSEvents.h"
+#include "ThumbCreator.h"
 
 struct AddSourceData {
    obs_source_t* source;
@@ -30,42 +23,14 @@ QString GetRandomString(int len) {
    const QString possibleCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
 
    QString randomString;
-   for(int i=0; i<len; ++i)
+   for(int i=0; i < len; ++i)
    {
        int index = qrand() % possibleCharacters.length();
        QChar nextChar = possibleCharacters.at(index);
        randomString.append(nextChar);
    }
+   blog(LOG_INFO, "random string: %s", randomString.toStdString().c_str());
    return randomString;
-}
-
-void WSRequestHandler::HandleGetSourceImage(SourceThumbData* data) {
-  blog(LOG_INFO, "inside get source image");
-  QString cmd;
-  
-  if(!data->isMedia) {
-    cmd = "DISPLAY=:0 python /apps/tools/screenshot.py " + data->url
-      + " " + data->image_id + ".png";
-  } else {
-    cmd = "ffmpeg -i " + data->url + " -vframes 1 -filter scale='640:-1' /var/www/html/thumbs/" + data->image_id;
-    + ".jpg";
-  }
-  
-  int ret = system(cmd.toUtf8());
-  if(ret > 0) {
-    blog(LOG_INFO, "failed to create thumbnail for source: %s", data->url);
-    return;
-  }
-  
-  QString url = "http://" + QHostInfo::localHostName() 
-    + ".aws-dev.intranet/thumbs/" 
-    + data->image_id + (data->isMedia ? ".jpg" : ".png");
-    
-  blog(LOG_INFO, "image url: %s", url.toUtf8());
-  
-  WSEvents::thumbsLock.lock();
-  WSEvents::processedSourceThumbs.insert(data->source_name.toUtf8(), url);
-  WSEvents::thumbsLock.unlock();
 }
 
 void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
@@ -111,19 +76,16 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
   
   blog(LOG_INFO, "before src thumb data struct");
   
-  SourceThumbData* src_thumb_data = new SourceThumbData();
+  ThumbCreator* thumbCreator = new ThumbCreator(
+    QString::fromLocal8Bit(input_url),
+    QString::fromLocal8Bit(source_name),
+    GetRandomString(32),
+    true
+  );
   
-  src_thumb_data->source_name = source_name;
-  QString rand = GetRandomString(32);
-  blog(LOG_INFO, "source name rand it: %s", rand.toUtf8());
-  src_thumb_data->image_id = rand;
-  src_thumb_data->url = input_url;
-  src_thumb_data->isMedia = true;
+  blog(LOG_INFO, "before thumb creator run");
+  thumbCreator->run();
   
-  blog(LOG_INFO, "before get media source image thread");
-  std::thread t1(WSRequestHandler::HandleGetSourceImage, src_thumb_data);
-  t1.detach();
-
   obs_source_t* previewScene = obs_frontend_get_current_preview_scene();
   obs_source_t* programScene = obs_frontend_get_current_scene();
   OBSDataAutoRelease audio_opts = obs_data_create();
@@ -169,6 +131,8 @@ void WSRequestHandler::AddSource(void *_data, obs_scene_t *scene)
    AddSourceData* data = (AddSourceData*)_data;
    OBSSceneItem sceneitem;
    sceneitem = obs_scene_add(scene, data->source);
+   obs_frontend_event_cb();
+   obs_frontend_add_event_callback();
    obs_sceneitem_set_visible(sceneitem, data->visible);
 }
 
@@ -245,15 +209,14 @@ void WSRequestHandler::HandleAddBrowserSource(WSRequestHandler* req) {
   blog(LOG_INFO, "before browser source release");
   obs_source_release(browser);
   
-  SourceThumbData* src_thumb_data = new SourceThumbData();
-  src_thumb_data->url = url;
-  src_thumb_data->image_id = GetRandomString(32);
-  src_thumb_data->source_name = source_name;
-  src_thumb_data->isMedia = false;
+  ThumbCreator* thumbCreator = new ThumbCreator(
+    QString::fromLocal8Bit(url),
+    QString::fromLocal8Bit(source_name),
+    GetRandomString(32),
+    false
+  );
   
-  blog(LOG_INFO, "before get source image thread");
-  std::thread t1(WSRequestHandler::HandleGetSourceImage, src_thumb_data);
-  t1.detach();
+  thumbCreator->run();
   
   OBSDataAutoRelease resp = obs_data_create();
   obs_data_set_string(resp, "sourceName", source_name);
@@ -268,6 +231,7 @@ void WSRequestHandler::HandleClearSession(WSRequestHandler* req) {
 bool WSRequestHandler::RemoveSource(void* p, obs_source_t* src) {
   TurnOffSourceAudio(nullptr, src);
   obs_source_remove(src);
+  EVENT
   return true;
 }
 
