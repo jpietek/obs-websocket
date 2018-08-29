@@ -229,7 +229,6 @@ void WSRequestHandler::HandleClearSession(WSRequestHandler* req) {
 bool WSRequestHandler::RemoveSource(void* p, obs_source_t* src) {
   TurnOffSourceAudio(nullptr, src);
   obs_source_remove(src);
-  EVENT
   return true;
 }
 
