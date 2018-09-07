@@ -6,6 +6,7 @@
 #include <QProcess>
 #include <QFuture>
 #include <QtConcurrent/QtConcurrentRun>
+#include <QFile>
 
 #include <iostream>
 
@@ -38,14 +39,14 @@ class ThumbCreator : public QThread {
             QStringList args;
             args <<  "-v" << "error" << "-select_streams" << "v:0" << "-show_entries" << "stream=width,height" << "-of" << "csv=s=x:p=0" << this->url;
             blog(LOG_INFO, "ffprobe start");
-            
+            blog(LOG_INFO, "ffprobe args: %s", args.join(" ").toStdString().c_str());
             ffprobe.start("ffprobe", args);
             ffprobe.waitForFinished();
             
             blog(LOG_INFO, "ffprobe finished");
-            QString output(ffprobe.readAllStandardOutput());
+            QString output(ffprobe.readLine());
             blog(LOG_INFO, "ffprobe got output");
-            QStringList size = output.split('x', QString::SkipEmptyParts);
+            QStringList size = output.split('x');
          
             int width = size[0].toInt();
             int height = size[1].toInt();
@@ -73,12 +74,16 @@ class ThumbCreator : public QThread {
          return;
       }
       
-      QString s3Upload = "aws s3 cp /var/www/html/thumbs/" + fileName + " s3://tellyo-liveproducer-dev/vt/";
+      QString localThumbPath = "/var/www/html/thumbs/" + fileName;
+      QString s3Upload = "aws s3 cp  " + localThumbPath + " s3://tellyo-liveproducer-dev/vt/";
       int s3Ret = system(s3Upload.toStdString().c_str());
       if(s3Ret > 0) {
          blog(LOG_INFO, "failed to upload thumbnail to s3");
          return;
       }
+      
+      QFile file(localThumbPath);
+      file.remove();
       
       QString url = "https://d1wvo40j13vzat.cloudfront.net/vt/" + fileName;
       blog(LOG_INFO, "image url: %s", url.toStdString().c_str());      
