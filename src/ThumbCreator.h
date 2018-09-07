@@ -32,14 +32,16 @@ class ThumbCreator : public QThread {
       QHash<QString, QString> srcData;
       
       QFuture<QStringList> future;
-       if(this->isMedia) {
-          future = QtConcurrent::run([=]() {
+         if(this->isMedia) {
+            future = QtConcurrent::run([=]() {
             QProcess ffprobe;
             QStringList args;
             args <<  "-v" << "error" << "-select_streams" << "v:0" << "-show_entries" << "stream=width,height" << "-of" << "csv=s=x:p=0" << this->url;
             blog(LOG_INFO, "ffprobe start");
+            
             ffprobe.start("ffprobe", args);
             ffprobe.waitForFinished();
+            
             blog(LOG_INFO, "ffprobe finished");
             QString output(ffprobe.readAllStandardOutput());
             blog(LOG_INFO, "ffprobe got output");
@@ -52,7 +54,7 @@ class ThumbCreator : public QThread {
             QStringList out;
             out << size[0] << size[1];
             return out;
-      });
+         });
       }
   
       QString fileName = this->image_id + (this->isMedia ? ".jpg" : ".png");
@@ -79,10 +81,7 @@ class ThumbCreator : public QThread {
       }
       
       QString url = "https://d1wvo40j13vzat.cloudfront.net/vt/" + fileName;
-    
-      blog(LOG_INFO, "image url: %s", url.toStdString().c_str());
-      
-      
+      blog(LOG_INFO, "image url: %s", url.toStdString().c_str());      
       srcData["thumbUrl"] = url;
       
       if(this->isMedia) {
