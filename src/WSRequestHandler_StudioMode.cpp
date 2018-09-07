@@ -76,7 +76,7 @@ void WSRequestHandler::HandleSetPreviewScene(WSRequestHandler* req) {
     obs_source_t* scene = Utils::GetSceneFromNameOrCurrent(scene_name);
 
     if (scene) {
-	obs_frontend_set_current_preview_scene(scene);
+      obs_frontend_set_current_preview_scene(scene);
 	
         req->SendOKResponse();
     } else {

@@ -1,23 +1,16 @@
-[Buildset]
-BuildItems=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x01\x00\x00\x00\x1a\x00o\x00b\x00s\x00-\x00w\x00e\x00b\x00s\x00o\x00c\x00k\x00e\x00t)
-
 [CMake]
 Build Directory Count=1
-Current Build Directory Index=0
-ProjectRootRelative=./
+Current Build Directory Index-Host System=0
 
 [CMake][CMake Build Directory 0]
-Build Directory Path=file:///home/jp/git/obs-websocket/build
+Build Directory Path=/home/jp/git/obs-websocket/build
 Build Type=
-CMake Binary=file:///usr/bin/cmake
+CMake Binary=/usr/bin/cmake
+CMake Executable=/usr/bin/cmake
 Environment Profile=
 Extra Arguments=
-Install Directory=file:///usr/local
-
-[Defines And Includes][Compiler]
-Name=GCC
-Path=gcc
-Type=GCC
+Install Directory=/usr/local
+Runtime=Host System
 
 [Project]
 VersionControlSupport=kdevgit

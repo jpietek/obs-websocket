@@ -32,7 +32,7 @@
 QHash<QString, obs_data_t*> WSEvents::audioMonitorLevel {
 };
 
-QHash<QString, QString> WSEvents::processedSourceThumbs {
+QHash<QString, QHash<QString, QString>> WSEvents::processedSourceThumbs {
 };
 
 QMutex WSEvents::thumbsLock {
@@ -94,9 +94,9 @@ WSEvents::WSEvents(WSServer* srv) {
         this, SLOT(Heartbeat()));
     statusTimer->start(2000); // equal to frontend's constant BITRATE_UPDATE_SECONDS
 
-    QListWidget* sceneList = Utils::GetSceneListControl();
+    /*QListWidget* sceneList = Utils::GetSceneListControl();
     connect(sceneList, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)),
-        this, SLOT(SelectedSceneChanged(QListWidgetItem*, QListWidgetItem*)));
+        this, SLOT(SelectedSceneChanged(QListWidgetItem*, QListWidgetItem*)));*/
 
     currentScene = nullptr;
     currentTransition = nullptr;
@@ -339,10 +339,10 @@ void WSEvents::OnSceneChange() {
 
     // Dirty fix : OBS blocks signals when swapping scenes in Studio Mode
     // after transition end, so SelectedSceneChanged is never called...
-    if (obs_frontend_preview_program_mode_active()) {
+    /*if (obs_frontend_preview_program_mode_active()) {
         QListWidget* list = Utils::GetSceneListControl();
         SelectedSceneChanged(list->currentItem(), nullptr);
-    }
+    }*/
 }
 
 /**
@@ -628,16 +628,27 @@ void WSEvents::NotifyThumbnails() {
    OBSDataAutoRelease data = obs_data_create();
    OBSDataAutoRelease sources = obs_data_create();
    thumbsLock.lock();
-   QHash<QString, QString>::iterator i = processedSourceThumbs.begin();
-   while (i != processedSourceThumbs.end()) {
-      const char* sn = i.key().toUtf8();
-      const char* tu = i.value().toUtf8();
-      blog(LOG_INFO, "source thumb to notify: %s %s", sn, tu);
-      obs_data_set_string(sources, sn, tu);
-      i = processedSourceThumbs.erase(i);
+   QMutableHashIterator<QString, QHash<QString, QString>> i(processedSourceThumbs);
+   while (i.hasNext()) {
+      i.next();
+      const char* sourceName = i.key().toUtf8();
+      QHash<QString, QString> srcData = i.value();
+      
+      OBSDataAutoRelease srcDataObs = obs_data_create();
+      obs_data_set_string(srcDataObs, "thumbnailUrl", srcData["thumbUrl"].toStdString().c_str());
+      if(srcData["thumbUrl"].endsWith(".jpg")) {
+         obs_data_set_int(srcDataObs, "width", srcData["width"].toInt());
+         obs_data_set_int(srcDataObs, "height", srcData["height"].toInt());
+      }
+
+      blog(LOG_INFO, "source thumb to notify: %s ", sourceName);
+      obs_data_set_obj(sources, sourceName, srcDataObs);
+      blog(LOG_INFO, "before erase");
+      i.remove();
    }
    thumbsLock.unlock();
    
+   blog(LOG_INFO, "before thumb notif send");
    obs_data_set_obj(data, "sources", sources);
    
    WSEvents::Instance->broadcastUpdate("ThumbnailNotify", data);
@@ -965,7 +976,7 @@ void WSEvents::OnSceneItemVisibilityChanged(void* param, calldata_t* data) {
  * @since 4.1.0
  */
 void WSEvents::SelectedSceneChanged(QListWidgetItem* current, QListWidgetItem* prev) {
-    if (obs_frontend_preview_program_mode_active()) {
+    /*if (obs_frontend_preview_program_mode_active()) {
         OBSScene scene = Utils::SceneListItemToScene(current);
         if (!scene)
             return;
@@ -978,7 +989,7 @@ void WSEvents::SelectedSceneChanged(QListWidgetItem* current, QListWidgetItem* p
         obs_data_set_array(data, "sources", sceneItems);
 
         broadcastUpdate("PreviewSceneChanged", data);
-    }
+    }*/
 }
 
 /**

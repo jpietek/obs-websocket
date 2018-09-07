@@ -4,6 +4,9 @@
 #include "WSRequestHandler.h"
 #include "WSEvents.h"
 #include "ThumbCreator.h"
+#include "Utils.h"
+
+#include <unistd.h>
 
 struct AddSourceData {
    obs_source_t* source;
@@ -96,7 +99,7 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
     if(previewScene != nullptr) {
       const char* previewSceneName = obs_source_get_name(previewScene);
       blog(LOG_INFO, "add media preview name: %s", previewSceneName, scene_name);
-      if(strcmp(previewSceneName, scene_name) == 0 /*&& !WSRequestHandler::audioMonitorMap.empty()*/) {
+      if(strcmp(previewSceneName, scene_name) == 0) {
 	const char* programSceneName = obs_source_get_name(programScene);
 
 	blog(LOG_INFO, "add media program scene: %s", programSceneName);
@@ -106,7 +109,7 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
 	audioMonitorAdded = true;
       }
     } else if(programScene != nullptr && strcmp(obs_source_get_name(programScene), scene_name) == 0 
-      /*&& !WSRequestHandler::audioMonitorMap.empty()*/ && !audioMonitorAdded) {
+       && !audioMonitorAdded) {
        obs_data_set_bool(audio_opts, "output", true);
        WSRequestHandler::TurnOnSourceAudioMonitor(src, audio_opts);
     }
@@ -137,12 +140,35 @@ void WSRequestHandler::AddSource(void *_data, obs_scene_t *scene)
 void WSRequestHandler::HandleRemoveSource(WSRequestHandler* req) {
   blog(LOG_INFO, "inside remove source");
   
-  const char* source_name = obs_data_get_string(req->data, "sourceName");
-  obs_source_t* s = obs_get_source_by_name(source_name);
+  const char* sourceNameToRemove = obs_data_get_string(req->data, "sourceName");
+  obs_source_t* s = obs_get_source_by_name(sourceNameToRemove);
+  
+  obs_source_t* previewScene = obs_frontend_get_current_preview_scene();
+  const char* previewSceneName = obs_source_get_name(previewScene);
+  
+   auto checkPreviewScene = [](obs_scene_t* scene, obs_sceneitem_t* item, void* params) -> bool {
+      obs_source_t* curSrc = obs_sceneitem_get_source(item);
+      const char* curSourceName = obs_source_get_name(curSrc);
+      const char* sourceNameToRemove = (const char*) params;
+      blog(LOG_INFO, "remove src to remove vs cur preview src: %s %s", curSourceName, sourceNameToRemove);
+       if(strcmp(curSourceName, sourceNameToRemove) == 0) {
+          blog(LOG_INFO, "removing current preview source, set blank scene as preview");
+          obs_source_t* blankScene = Utils::GetSceneFromNameOrCurrent("Scene 9");
+          obs_frontend_set_current_preview_scene(blankScene);
+          obs_source_release(blankScene);
+      }
+      return true;
+  };
+  
+  obs_scene_enum_items(obs_scene_from_source(previewScene), checkPreviewScene, (void*)sourceNameToRemove);
+  
   TurnOffSourceAudio(nullptr, s);
   obs_source_release(s);
   
   obs_source_remove(s);
+  obs_frontend_set_current_preview_scene(previewScene);
+  obs_source_release(previewScene);
+  
   req->SendOKResponse(nullptr);
 }
 
@@ -222,7 +248,21 @@ void WSRequestHandler::HandleAddBrowserSource(WSRequestHandler* req) {
 }
 
 void WSRequestHandler::HandleClearSession(WSRequestHandler* req) {
+  obs_source_t* previewScene = obs_frontend_get_current_preview_scene();
+  obs_source_t* blankScene = Utils::GetSceneFromNameOrCurrent("Scene 9"); 
+  obs_frontend_set_current_preview_scene(blankScene);
+  
   obs_enum_sources(RemoveSource, nullptr);
+  
+  sleep(1);
+  
+  //ugly hack: try to remove one more time...
+  obs_enum_sources(RemoveSource, nullptr);
+  
+  sleep(1);
+  
+  obs_frontend_set_current_preview_scene(previewScene);
+  obs_source_release(previewScene);
   req->SendOKResponse();
 }
 
@@ -243,7 +283,21 @@ void WSRequestHandler::ClearScene(const char* name) {
 }
 
 void WSRequestHandler::HandleClearScene(WSRequestHandler* req) {
-  const char* scene_name = obs_data_get_string(req->data, "sceneName");
-  WSRequestHandler::ClearScene(scene_name);
+  const char* sceneName = obs_data_get_string(req->data, "sceneName");
+  
+  obs_source_t* previewScene = obs_frontend_get_current_preview_scene();
+  const char* previewSceneName = obs_source_get_name(previewScene);
+  
+  obs_source_t* blankScene = Utils::GetSceneFromNameOrCurrent("Scene 9"); 
+  obs_frontend_set_current_preview_scene(blankScene);
+  
+  if(strcmp(previewSceneName, sceneName) == 0) {
+      blog(LOG_INFO, "clearing preview scene, set preview to blank");
+      obs_source_t* blankScene = Utils::GetSceneFromNameOrCurrent("Scene 9");
+      obs_frontend_set_current_preview_scene(blankScene);
+  }
+   
+  
+  WSRequestHandler::ClearScene(sceneName);
   req->SendOKResponse(nullptr);
 }
