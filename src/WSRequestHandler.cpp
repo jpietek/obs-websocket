@@ -32,6 +32,9 @@ QMutex WSRequestHandler::audioLock {
 
 bool WSRequestHandler::audioMonitorStarted = false;
 
+QHash<QString, boost::circular_buffer<double>*> WSRequestHandler::audioBuffer {
+};
+
 QHash<QString, void(*)(WSRequestHandler*)> WSRequestHandler::messageMap {
     { "GetVersion", WSRequestHandler::HandleGetVersion },
     { "GetAuthRequired", WSRequestHandler::HandleGetAuthRequired },

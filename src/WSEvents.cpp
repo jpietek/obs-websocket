@@ -631,7 +631,7 @@ void WSEvents::NotifyThumbnails() {
    QMutableHashIterator<QString, QHash<QString, QString>> i(processedSourceThumbs);
    while (i.hasNext()) {
       i.next();
-      const char* sourceName = i.key().toUtf8();
+      QString sourceName = i.key();
       QHash<QString, QString> srcData = i.value();
       
       OBSDataAutoRelease srcDataObs = obs_data_create();
@@ -641,8 +641,8 @@ void WSEvents::NotifyThumbnails() {
          obs_data_set_int(srcDataObs, "height", srcData["height"].toInt());
       }
 
-      blog(LOG_INFO, "source thumb to notify: %s ", sourceName);
-      obs_data_set_obj(sources, sourceName, srcDataObs);
+      blog(LOG_INFO, "source thumb to notify: %s ", sourceName.toUtf8());
+      obs_data_set_obj(sources, sourceName.toUtf8(), srcDataObs);
       blog(LOG_INFO, "before erase");
       i.remove();
    }
@@ -663,9 +663,9 @@ void WSEvents::UpdateAudioMonitor() {
    OBSDataAutoRelease sources = obs_data_create();
    for (QHash<QString, obs_data_t*>::const_iterator it = audioMonitorLevel.cbegin(), 
      end = audioMonitorLevel.cend(); it != end; ++it) {
-     const char* sourceName = it.key().toUtf8();
+     QString sourceName = it.key();
      obs_data_t* audioLevels = it.value();
-     obs_data_set_obj(sources, sourceName, audioLevels);
+     obs_data_set_obj(sources, sourceName.toUtf8(), audioLevels);
    }
    obs_data_set_obj(data, "sources", sources);
    WSEvents::Instance->broadcastUpdate("AudioMonitor", data);

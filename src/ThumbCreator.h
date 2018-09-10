@@ -75,8 +75,10 @@ class ThumbCreator : public QThread {
       }
       
       QString localThumbPath = "/var/www/html/thumbs/" + fileName;
-      QString s3Upload = "aws s3 cp  " + localThumbPath + " s3://tellyo-liveproducer-dev/vt/";
+      QString s3Upload = "aws s3 cp " + localThumbPath + " s3://tellyo-liveproducer-dev/vt/";
+      blog(LOG_INFO, "before s3 upload: %s", s3Upload.toStdString().c_str());
       int s3Ret = system(s3Upload.toStdString().c_str());
+      blog(LOG_INFO, "after s3 upload");
       if(s3Ret > 0) {
          blog(LOG_INFO, "failed to upload thumbnail to s3");
          return;
@@ -86,7 +88,7 @@ class ThumbCreator : public QThread {
       file.remove();
       
       QString url = "https://d1wvo40j13vzat.cloudfront.net/vt/" + fileName;
-      blog(LOG_INFO, "image url: %s", url.toStdString().c_str());      
+      blog(LOG_INFO, "image url: %s", url.toUtf8());      
       srcData["thumbUrl"] = url;
       
       if(this->isMedia) {

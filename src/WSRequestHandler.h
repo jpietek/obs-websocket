@@ -32,6 +32,9 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include "obs-websocket.h"
 
+#include <queue>
+#include <boost/circular_buffer.hpp>
+
 class WSRequestHandler : public QObject {
   Q_OBJECT
 
@@ -57,6 +60,7 @@ class WSRequestHandler : public QObject {
     
     static QHash<QString, obs_volmeter_t*> audioMonitorMap;
     static QMutex audioLock;
+    static QHash<QString, boost::circular_buffer<double>*> audioBuffer;
     static bool audioMonitorStarted;
     
     static void HandleGetVersion(WSRequestHandler* req);

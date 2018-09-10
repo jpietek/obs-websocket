@@ -69,10 +69,15 @@ bool WSRequestHandler::TurnOnSourceAudioMonitor(obs_source_t* source, obs_data_t
   obs_data_set_string(data, "sourceName", sourceName);
   
   obs_volmeter_t* volmeter = obs_volmeter_create(OBS_FADER_CUBIC);
-  obs_volmeter_set_update_interval(volmeter, 10000);
+  obs_volmeter_set_update_interval(volmeter, 10);
   obs_volmeter_attach_source(volmeter, source);
   obs_volmeter_add_callback(volmeter, HandleVolumeLevel, data);
   WSRequestHandler::audioMonitorMap.insert(sourceName, volmeter);
+  
+  blog(LOG_INFO, "setup buffer");
+  boost::circular_buffer<double>* buf = new boost::circular_buffer<double>(100);
+  buf->set_capacity(100);
+  WSRequestHandler::audioBuffer[sourceName] = buf;
   WSRequestHandler::audioLock.unlock();
 
   return true;
@@ -113,11 +118,27 @@ void WSRequestHandler::HandleVolumeLevel(void *data,
 	  blog(LOG_INFO, "audio monitoring: got null data, sth went wrong");
 	}
 	
-	obs_data_t* levels = obs_data_create();
-	const char* sourceName = obs_data_get_string((obs_data_t*)data, "sourceName");
+   const char* sourceName = obs_data_get_string((obs_data_t*)data, "sourceName");
 	double peakLinear = pow(10.0f, peak[1] / 20.0f);
 	double inputPeakLinear = pow(10.0f, inputPeak[1] / 20.0f);
-	obs_data_set_double(levels, "peak", peakLinear);
+	
+   boost::circular_buffer<double>* buf = WSRequestHandler::audioBuffer[sourceName];
+   buf->push_back(peakLinear);
+   
+   blog(LOG_INFO, "buffer size: %i %i", buf->size(), buf->capacity());
+   
+   double maxPeak = 0;
+   double pows = 0;
+   for(int i = 0; i < buf->size(); i++) {
+      maxPeak = std::max(buf->at(i), maxPeak);
+      pows += std::pow(buf->at(i), 2);
+   }
+   
+   double rms = std::sqrt(pows / 100.0);
+
+	obs_data_t* levels = obs_data_create();
+   blog(LOG_INFO, "audio level: %f %f", rms, maxPeak);
+	obs_data_set_double(levels, "peak", rms);
 	obs_data_set_double(levels, "input peak", inputPeakLinear);
 	
 	WSEvents::audioMonitorLevel[sourceName] = levels;

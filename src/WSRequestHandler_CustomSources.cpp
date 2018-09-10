@@ -54,16 +54,11 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
   OBSDataAutoRelease source_settings = obs_data_create();
   const char* input_url = obs_data_get_string(req->data, "url");
 
-  long zoom = obs_data_get_int(req->data, "zoom");
-  if(zoom <= 0 || zoom > 100) {
-    zoom = 0;
-  }
   obs_data_set_bool(source_settings, "is_local_file", false);
   obs_data_set_bool(source_settings, "hw_decode", true);
   obs_data_set_bool(source_settings, "clear_on_media_end", false);
   obs_data_set_string(source_settings, "input", input_url);
   obs_data_set_bool(source_settings, "restart_on_activate", false);
-  obs_data_set_int(source_settings, "zoom", zoom);
   
   blog(LOG_INFO, "source created:  %s", source_name);
   obs_source_t* src = obs_source_create("ffmpeg_source", source_name, source_settings, NULL);
@@ -126,6 +121,7 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
   
   OBSDataAutoRelease resp = obs_data_create();
   obs_data_set_string(resp, "sourceName", source_name);
+  
   req->SendOKResponse(resp);
 }
 
