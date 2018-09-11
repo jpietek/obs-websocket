@@ -15,13 +15,18 @@ class ThumbCreator : public QThread {
     QString url;
     QString source_name;
     QString image_id;
+    QString browserWidth;
+    QString browserHeight;
     bool isMedia;
   
  public:
-   ThumbCreator(QString url, QString source_name, QString image_id, bool isMedia) {
+   ThumbCreator(QString url, QString source_name, QString image_id, QString browserWidth, 
+                QString browserHeight, bool isMedia) {
      this->url = url;
      this->source_name = source_name;
      this->image_id = image_id;
+     this->browserWidth = browserWidth;
+     this->browserHeight = browserHeight;
      this->isMedia = isMedia;
    };
    
@@ -60,8 +65,8 @@ class ThumbCreator : public QThread {
   
       QString fileName = this->image_id + (this->isMedia ? ".jpg" : ".png");
       if(!this->isMedia) {
-	      cmd = "DISPLAY=:0 python /apps/tools/screenshot.py " + this->url
-	        + " " + fileName;
+	      cmd = "DISPLAY=:0 node /apps/lsp/screenshot/screenshot.js " + this->url + 
+	        + " /var/www/html/thumbs/" + fileName + " " + this->browserWidth + " " + this->browserHeight;
       } else {
 	      cmd = "ffmpeg -i " + this->url + " -vframes 1 -filter scale='640:-1' /var/www/html/thumbs/" 
 	       + fileName;

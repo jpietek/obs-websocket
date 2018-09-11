@@ -78,6 +78,7 @@ void WSRequestHandler::HandleAddMediaSource(WSRequestHandler* req) {
     QString::fromLocal8Bit(input_url),
     QString::fromLocal8Bit(source_name),
     GetRandomString(32),
+    "", "",
     true
   );
   
@@ -195,6 +196,7 @@ void WSRequestHandler::HandleAddBrowserSource(WSRequestHandler* req) {
   obs_data_set_int(browser_settings, "zoom", 100);
   obs_data_set_int(browser_settings, "scroll_vertical", 3);
   obs_data_set_int(browser_settings, "fps", fps);
+  obs_data_set_bool(browser_settings, "hide_scrollbars", true);
   
   int browser_width = obs_data_get_int(req->data, "width");
   int browser_height = obs_data_get_int(req->data, "height");
@@ -233,6 +235,8 @@ void WSRequestHandler::HandleAddBrowserSource(WSRequestHandler* req) {
     QString::fromLocal8Bit(url),
     QString::fromLocal8Bit(source_name),
     GetRandomString(32),
+    QString::number(browser_width),
+    QString::number(browser_height),
     false
   );
   

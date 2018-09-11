@@ -91,6 +91,9 @@ void WSRequestHandler::SetupStreamingOutput(WSRequestHandler* req) {
   obs_service_apply_encoder_settings(s, settings, nullptr);
   obs_reset_video(&ovi);
   
+  QString cmd = "/apps/lsp/scripts/output_conf " + QString::number(width) + " " + QString::number(height);
+  system(cmd.toStdString().c_str());
+  
   req->SendOKResponse(nullptr);
 }
 
