@@ -80,7 +80,8 @@ class ThumbCreator : public QThread {
       }
       
       QString localThumbPath = "/var/www/html/thumbs/" + fileName;
-      QString s3Upload = "aws s3 cp " + localThumbPath + " s3://tellyo-liveproducer-dev/vt/";
+      QString bucketName = getenv("S3_BUCKET_NAME");
+      QString s3Upload = "aws s3 cp " + localThumbPath + " s3://" + bucketName + "/vt/";
       blog(LOG_INFO, "before s3 upload: %s", s3Upload.toStdString().c_str());
       int s3Ret = system(s3Upload.toStdString().c_str());
       blog(LOG_INFO, "after s3 upload");
@@ -92,7 +93,8 @@ class ThumbCreator : public QThread {
       QFile file(localThumbPath);
       file.remove();
       
-      QString url = "https://d1wvo40j13vzat.cloudfront.net/vt/" + fileName;
+      QString cdnPrefix = getenv("CDN_PREFIX");
+      QString url = "https://" + cdnPrefix + "/vt/" + fileName;
       blog(LOG_INFO, "image url: %s", url.toUtf8());      
       srcData["thumbUrl"] = url;
       
