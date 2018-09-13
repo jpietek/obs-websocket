@@ -125,8 +125,6 @@ void WSRequestHandler::HandleVolumeLevel(void *data,
    boost::circular_buffer<double>* buf = WSRequestHandler::audioBuffer[sourceName];
    buf->push_back(peakLinear);
    
-   blog(LOG_INFO, "buffer size: %i %i", buf->size(), buf->capacity());
-   
    double maxPeak = 0;
    double pows = 0;
    for(int i = 0; i < buf->size(); i++) {
@@ -137,7 +135,6 @@ void WSRequestHandler::HandleVolumeLevel(void *data,
    double rms = std::sqrt(pows / 100.0);
 
 	obs_data_t* levels = obs_data_create();
-   blog(LOG_INFO, "audio level: %f %f", rms, maxPeak);
 	obs_data_set_double(levels, "peak", rms);
 	obs_data_set_double(levels, "input peak", inputPeakLinear);
 	
