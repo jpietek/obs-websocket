@@ -2,6 +2,20 @@
 #include "WSEvents.h"
 #include "math.h"
 
+void WSRequestHandler::SetProgramVolume(WSRequestHandler* req) {   
+  blog(LOG_INFO, "before faders get");
+  obs_fader** faders = (struct obs_fader**) obs_audio_mix_faders();
+  blog(LOG_INFO, "get program fader");
+  obs_fader* programFader = faders[0];
+  
+  float normalizedVolume = obs_data_get_double(req->data, "volumeLevel");
+  float db = 60.0 * normalizedVolume - 60.0;
+  blog(LOG_INFO, "program fader values %f %f", normalizedVolume, db);
+  obs_fader_set_db(programFader, db);
+  
+  req->SendOKResponse();
+}
+
 void WSRequestHandler::PlayAudio(WSRequestHandler* req) {
   const char* name = obs_data_get_string(req->data, "sceneName");
   obs_source_t* s = obs_get_source_by_name(name);
@@ -28,6 +42,28 @@ void WSRequestHandler::PlayAudio(WSRequestHandler* req) {
   obs_scene_t* scene = obs_scene_from_source(s);
   obs_scene_enum_items(scene, TurnOnAudioMonitor, audio_opts);
   obs_scene_release(scene);
+  
+  if(!WSRequestHandler::audioBuffer.contains("program")) {
+     WSRequestHandler::audioLock.lock();
+     blog(LOG_INFO, "setup program buffer");
+     boost::circular_buffer<double>* buf = new boost::circular_buffer<double>(25);
+     buf->set_capacity(25);
+     WSRequestHandler::audioBuffer["program"] = buf;
+     WSRequestHandler::audioLock.unlock();
+  }
+  
+  blog(LOG_INFO, "before meters get");
+  obs_volmeter** meters = (struct obs_volmeter**) obs_audio_mix_meters();
+  blog(LOG_INFO, "get single meter");
+  obs_volmeter* programVolmeter = meters[0];
+  obs_data_t* programAudioData = obs_data_create();
+  obs_data_set_string(programAudioData, "sourceName", "program");
+  if(programVolmeter != nullptr) {
+      blog(LOG_INFO, "program volmeter not null");
+      obs_volmeter_add_callback(programVolmeter, WSRequestHandler::HandleVolumeLevel, programAudioData);
+  }
+  
+  blog(LOG_INFO, "after program volmeter callback");
   WSRequestHandler::audioMonitorStarted = true;
   req->SendOKResponse(nullptr);
 }
@@ -72,11 +108,12 @@ bool WSRequestHandler::TurnOnSourceAudioMonitor(obs_source_t* source, obs_data_t
   obs_volmeter_set_update_interval(volmeter, 10);
   obs_volmeter_attach_source(volmeter, source);
   obs_volmeter_add_callback(volmeter, HandleVolumeLevel, data);
+
   WSRequestHandler::audioMonitorMap.insert(sourceName, volmeter);
   
-  blog(LOG_INFO, "setup buffer");
-  boost::circular_buffer<double>* buf = new boost::circular_buffer<double>(100);
-  buf->set_capacity(100);
+  blog(LOG_INFO, "setup source buffer %s", sourceName);
+  boost::circular_buffer<double>* buf = new boost::circular_buffer<double>(25);
+  buf->set_capacity(25);
   WSRequestHandler::audioBuffer[sourceName] = buf;
   WSRequestHandler::audioLock.unlock();
 
@@ -119,24 +156,26 @@ void WSRequestHandler::HandleVolumeLevel(void *data,
 	}
 	
    const char* sourceName = obs_data_get_string((obs_data_t*)data, "sourceName");
-	double peakLinear = pow(10.0f, peak[1] / 20.0f);
-	double inputPeakLinear = pow(10.0f, inputPeak[1] / 20.0f);
 	
    boost::circular_buffer<double>* buf = WSRequestHandler::audioBuffer[sourceName];
-   buf->push_back(peakLinear);
+   buf->push_back((double)peak[0]);
    
-   double maxPeak = 0;
+   double maxPeak = -60.0;
    double pows = 0;
    for(int i = 0; i < buf->size(); i++) {
       maxPeak = std::max(buf->at(i), maxPeak);
       pows += std::pow(buf->at(i), 2);
    }
    
-   double rms = std::sqrt(pows / 100.0);
+   double rms = std::sqrt(pows / 25.0);
 
 	obs_data_t* levels = obs_data_create();
-	obs_data_set_double(levels, "peak", rms);
-	obs_data_set_double(levels, "input peak", inputPeakLinear);
+   
+   double maxPeakNormalized = (maxPeak + 60.0) / 60.0;
+   double inputPeakNormalized = ((double) peak[0] + 60.0) / 60.0;
+   
+	obs_data_set_double(levels, "peak", maxPeakNormalized);
+	obs_data_set_double(levels, "input peak", inputPeakNormalized);
 	
 	WSEvents::audioMonitorLevel[sourceName] = levels;
 }

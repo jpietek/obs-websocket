@@ -92,7 +92,7 @@ WSEvents::WSEvents(WSServer* srv) {
     pulse = false;
     connect(statusTimer, SIGNAL(timeout()),
         this, SLOT(Heartbeat()));
-    statusTimer->start(2000); // equal to frontend's constant BITRATE_UPDATE_SECONDS
+    statusTimer->start(500); // equal to frontend's constant BITRATE_UPDATE_SECONDS
 
     /*QListWidget* sceneList = Utils::GetSceneListControl();
     connect(sceneList, SIGNAL(currentItemChanged(QListWidgetItem*, QListWidgetItem*)),
@@ -655,18 +655,21 @@ void WSEvents::NotifyThumbnails() {
 }
 
 void WSEvents::UpdateAudioMonitor() {
+   
+   OBSDataAutoRelease data = obs_data_create();
+   OBSDataAutoRelease sources = obs_data_create();
+   
    if(audioMonitorLevel.empty()) {
       return;
    }
-  
-   OBSDataAutoRelease data = obs_data_create();
-   OBSDataAutoRelease sources = obs_data_create();
-   for (QHash<QString, obs_data_t*>::const_iterator it = audioMonitorLevel.cbegin(), 
-     end = audioMonitorLevel.cend(); it != end; ++it) {
-     QString sourceName = it.key();
-     obs_data_t* audioLevels = it.value();
-     obs_data_set_obj(sources, sourceName.toUtf8(), audioLevels);
+
+    for (QHash<QString, obs_data_t*>::const_iterator it = audioMonitorLevel.cbegin(), 
+         end = audioMonitorLevel.cend(); it != end; ++it) {
+         QString sourceName = it.key();
+         obs_data_t* audioLevels = it.value();
+         obs_data_set_obj(sources, sourceName.toUtf8(), audioLevels);
    }
+
    obs_data_set_obj(data, "sources", sources);
    WSEvents::Instance->broadcastUpdate("AudioMonitor", data);
 }

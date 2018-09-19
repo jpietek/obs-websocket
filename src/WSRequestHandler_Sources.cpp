@@ -24,7 +24,12 @@ void WSRequestHandler::HandleGetSourcesList(WSRequestHandler* req) {
     auto sourceEnumProc = [](void* privateData, obs_source_t* source) -> bool {
         obs_data_array_t* sourcesArray = (obs_data_array_t*)privateData;
 
-	blog(LOG_INFO, "before source data");
+        // dirty fix to skip sources for master mixer
+        QString name = obs_source_get_name(source);
+        if(name.contains("Track")) {
+            return true;
+        }
+        
         OBSDataAutoRelease sourceData = obs_data_create();
         obs_data_set_string(sourceData, "name", obs_source_get_name(source));
         obs_data_set_string(sourceData, "typeId", obs_source_get_id(source));
@@ -56,12 +61,10 @@ void WSRequestHandler::HandleGetSourcesList(WSRequestHandler* req) {
         blog(LOG_INFO, "got source type: %s", typeString.toUtf8());
         
         obs_data_set_string(sourceData, "type", typeString.toUtf8());
-
-	blog(LOG_INFO, "before sources push");
         obs_data_array_push_back(sourcesArray, sourceData);
         return true;
     };
-    blog(LOG_INFO, "before enum sources");
+
     obs_enum_sources(sourceEnumProc, sourcesArray);
 
     blog(LOG_INFO, "after enum sources");

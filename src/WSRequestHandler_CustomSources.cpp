@@ -32,6 +32,7 @@ QString GetRandomString(int len) {
        QChar nextChar = possibleCharacters.at(index);
        randomString.append(nextChar);
    }
+   
    blog(LOG_INFO, "random string: %s", randomString.toStdString().c_str());
    return randomString;
 }

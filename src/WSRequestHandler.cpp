@@ -133,6 +133,7 @@ QHash<QString, void(*)(WSRequestHandler*)> WSRequestHandler::messageMap {
     // custom audio
     { "PlayAudio", WSRequestHandler::PlayAudio },
     { "StopAudio", WSRequestHandler::StopAudio },
+    { "SetProgramVolume", WSRequestHandler::SetProgramVolume },
     
     // custom outputs
     { "SetupStreamingOutput", WSRequestHandler::SetupStreamingOutput },
