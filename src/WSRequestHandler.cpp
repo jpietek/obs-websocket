@@ -18,22 +18,9 @@
  */
 
 #include <obs-data.h>
-
 #include "Config.h"
 #include "Utils.h"
-
 #include "WSRequestHandler.h"
-
-QHash<QString, obs_volmeter_t*> WSRequestHandler::audioMonitorMap {
-};
-
-QMutex WSRequestHandler::audioLock {
-};
-
-bool WSRequestHandler::audioMonitorStarted = false;
-
-QHash<QString, boost::circular_buffer<double>*> WSRequestHandler::audioBuffer {
-};
 
 QHash<QString, void(*)(WSRequestHandler*)> WSRequestHandler::messageMap {
     { "GetVersion", WSRequestHandler::HandleGetVersion },

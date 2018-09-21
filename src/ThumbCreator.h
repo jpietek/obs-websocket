@@ -9,6 +9,7 @@
 #include <QFile>
 
 #include <iostream>
+#include "ProcessedThumbs.h"
 
 class ThumbCreator : public QThread {
   private:
@@ -105,8 +106,6 @@ class ThumbCreator : public QThread {
          srcData["height"] = dimensions[1];
       }
   
-      WSEvents::thumbsLock.lock();
-      WSEvents::processedSourceThumbs.insert(this->source_name, srcData);
-      WSEvents::thumbsLock.unlock();
+      ProcessedThumbs::insertThumb(this->source_name, srcData);
    }
 };

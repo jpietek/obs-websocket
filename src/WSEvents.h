@@ -41,10 +41,6 @@ class WSEvents : public QObject {
     uint64_t GetRecordingTime();
     const char* GetRecordingTimecode();
     
-    static QHash<QString, obs_data_t*> audioMonitorLevel;
-    static QHash<QString, QHash<QString, QString>> processedSourceThumbs;
-    static QMutex thumbsLock;
-    
     void broadcastUpdate(const char* updateType, obs_data_t* additionalFields);
    
     bool HeartbeatIsActive;

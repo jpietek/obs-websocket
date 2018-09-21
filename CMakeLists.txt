@@ -22,7 +22,6 @@ set(obs-websocket_SOURCES
 	src/obs-websocket.cpp
 	src/WSServer.cpp
 	src/WSRequestHandler.cpp
-	src/WSRequestHandler_Audio.cpp
 	src/WSRequestHandler_General.cpp
 	src/WSRequestHandler_Profiles.cpp
 	src/WSRequestHandler_Recording.cpp
@@ -32,6 +31,7 @@ set(obs-websocket_SOURCES
 	src/WSRequestHandler_SceneItems.cpp
 	src/WSRequestHandler_Sources.cpp
 	src/WSRequestHandler_CustomSources.cpp
+	src/WSRequestHandler_Audio.cpp
 	src/WSRequestHandler_Streaming.cpp
 	src/WSRequestHandler_StudioMode.cpp
 	src/WSRequestHandler_Output.cpp
@@ -39,6 +39,9 @@ set(obs-websocket_SOURCES
 	src/WSEvents.cpp
 	src/Config.cpp
 	src/Utils.cpp
+   src/Audio.cpp
+   src/ProcessedThumbs.cpp
+   src/CustomSources.cpp
 	src/forms/settings-dialog.cpp)
 
 set(obs-websocket_HEADERS
@@ -48,6 +51,10 @@ set(obs-websocket_HEADERS
 	src/WSEvents.h
 	src/Config.h
 	src/Utils.h
+   src/Audio.h
+   src/ThumbCreator.h
+   src/ProcessedThumbs.h
+   src/CustomSources.h
 	src/forms/settings-dialog.h)
 
 # --- Platform-independent build settings ---
