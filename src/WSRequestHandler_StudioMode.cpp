@@ -2,6 +2,7 @@
 #include "Utils.h"
 
 #include "WSRequestHandler.h"
+#include "CustomSources.h"
 
 /**
  * Indicates if Studio Mode is currently enabled.
@@ -76,9 +77,9 @@ void WSRequestHandler::HandleSetPreviewScene(WSRequestHandler* req) {
     obs_source_t* scene = Utils::GetSceneFromNameOrCurrent(scene_name);
 
     if (scene) {
+      obs_scene_enum_items(obs_scene_from_source(scene), CustomSources::activateSource, nullptr);
       obs_frontend_set_current_preview_scene(scene);
-	
-        req->SendOKResponse();
+      req->SendOKResponse();
     } else {
         req->SendErrorResponse("specified scene doesn't exist");
     }

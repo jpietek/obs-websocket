@@ -493,6 +493,7 @@ void WSRequestHandler::HandleSetSourceSettings(WSRequestHandler* req) {
 
     obs_source_update(source, sourceSettings);
     obs_source_update_properties(source);
+    obs_source_active(source);
 
     OBSDataAutoRelease response = obs_data_create();
     obs_data_set_string(response, "sourceName", obs_source_get_name(source));
