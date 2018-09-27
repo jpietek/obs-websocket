@@ -73,11 +73,18 @@ void WSRequestHandler::HandleSetPreviewScene(WSRequestHandler* req) {
         return;
     }
 
-    const char* scene_name = obs_data_get_string(req->data, "scene-name");
-    obs_source_t* scene = Utils::GetSceneFromNameOrCurrent(scene_name);
+    const char* sceneName = obs_data_get_string(req->data, "scene-name");
+    obs_source_t* scene = Utils::GetSceneFromNameOrCurrent(sceneName);
 
+    obs_source_t* programSource = obs_frontend_get_current_preview_scene();
+    const char* programSceneName = obs_source_get_name(programSource);
+    obs_source_release(programSource);
+    
     if (scene) {
-      obs_scene_enum_items(obs_scene_from_source(scene), CustomSources::activateSource, nullptr);
+      // re-activate sources only if the scene is not on program / not to break ongoing live-stream
+      if(strcmp(programSceneName, sceneName) == 0) {
+         obs_scene_enum_items(obs_scene_from_source(scene), CustomSources::ActivateSource, nullptr);
+      }
       obs_frontend_set_current_preview_scene(scene);
       req->SendOKResponse();
     } else {

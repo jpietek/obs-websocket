@@ -24,7 +24,7 @@
     OBSSourceAutoRelease source = obs_get_source_by_name(sceneName);
 
     if (source) {
-        obs_scene_enum_items(obs_scene_from_source(source), CustomSources::activateSource, nullptr);
+        obs_scene_enum_items(obs_scene_from_source(source), CustomSources::ActivateSource, nullptr);
         obs_frontend_set_current_scene(source);
         req->SendOKResponse();
     } else {

@@ -36,9 +36,9 @@ class CustomSources : public QObject {
       static void HandleAddBrowserSource(WSRequestHandler* req);
       static void HandleClearSession(WSRequestHandler* req);
       static void HandleClearScene(WSRequestHandler* req);
+      static void RefreshSource(WSRequestHandler* req);
       
-      static bool activateSource(obs_scene_t* scene, obs_sceneitem_t* item, void* params);
-      
+      static bool ActivateSource(obs_scene_t* scene, obs_sceneitem_t* item, void* params);
 };
 
 #endif

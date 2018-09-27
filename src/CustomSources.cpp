@@ -2,6 +2,19 @@
 
 // public
 
+void CustomSources::RefreshSource(WSRequestHandler* req) {
+   obs_source_t* source = obs_get_source_by_name(obs_data_get_string(req->data, "sourceName"));
+   const char* type = obs_source_get_id(source);
+   if(strcmp(type, "ffmpeg_source") != 0) {
+      return;
+   }
+   
+   obs_data_t* emptySettings = obs_data_create();
+   obs_source_update(source, emptySettings);
+   obs_source_update_properties(source);
+   obs_source_active(source);
+}
+
 void CustomSources::HandleRemoveSource(WSRequestHandler* req) {
   blog(LOG_INFO, "inside remove source");
   const char* sourceNameToRemove = obs_data_get_string(req->data, "sourceName");
@@ -53,12 +66,14 @@ void CustomSources::HandleAddMediaSource(WSRequestHandler* req) {
   
      OBSDataAutoRelease source_settings = obs_data_create();
      const char* input_url = obs_data_get_string(req->data, "url");
+     bool loop = obs_data_get_bool(req->data, "loop");
      
      obs_data_set_bool(source_settings, "is_local_file", false);
      obs_data_set_bool(source_settings, "hw_decode", true);
      obs_data_set_bool(source_settings, "clear_on_media_end", false);
      obs_data_set_string(source_settings, "input", input_url);
      obs_data_set_bool(source_settings, "restart_on_activate", false);
+     obs_data_set_bool(source_settings, "looping", loop);
      
      blog(LOG_INFO, "source created:  %s", source_name);
      src = obs_source_create("ffmpeg_source", source_name, source_settings, NULL);
@@ -270,7 +285,7 @@ void CustomSources::ClearScene(const char* name) {
   obs_scene_enum_items(scene, removeSceneItemSource, nullptr);
 }
 
-bool CustomSources::activateSource(obs_scene_t* scene, obs_sceneitem_t* item, void* params) {
+bool CustomSources::ActivateSource(obs_scene_t* scene, obs_sceneitem_t* item, void* params) {
    obs_source_t* s = obs_sceneitem_get_source(item);
    const char* sourceName = obs_source_get_name(s);
    const char* type = obs_source_get_id(s);

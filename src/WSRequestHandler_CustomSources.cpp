@@ -20,3 +20,7 @@ void WSRequestHandler::HandleClearSession(WSRequestHandler* req) {
 void WSRequestHandler::HandleClearScene(WSRequestHandler* req) {
    CustomSources::HandleClearScene(req);
 }
+
+void WSRequestHandler::HandleRefreshSource(WSRequestHandler* req) {
+   CustomSources::RefreshSource(req);
+}

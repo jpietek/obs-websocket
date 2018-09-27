@@ -151,6 +151,7 @@ class WSRequestHandler : public QObject {
     static void HandleRemoveSource(WSRequestHandler* req);
     static void HandleClearSession(WSRequestHandler* req);
     static void HandleClearScene(WSRequestHandler* req);
+    static void HandleRefreshSource(WSRequestHandler* req);
     
     // outputs
     static void SetupStreamingOutput(WSRequestHandler* req);
