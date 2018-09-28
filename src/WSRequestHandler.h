@@ -49,6 +49,8 @@ class WSRequestHandler : public QObject {
     void SendErrorResponse(obs_data_t* additionalFields = NULL);
     void SendResponse(obs_data_t* response);
     OBSDataAutoRelease data;
+    
+    static void HandleSetSourceSettings(WSRequestHandler* req);
 
   private:
     QWebSocket* _client;
@@ -113,7 +115,6 @@ class WSRequestHandler : public QObject {
     static void HandleGetSourcesList(WSRequestHandler* req);
     static void HandleGetSourceTypesList(WSRequestHandler* req);
     static void HandleGetSourceSettings(WSRequestHandler* req);
-    static void HandleSetSourceSettings(WSRequestHandler* req);
 
     static void HandleSetCurrentSceneCollection(WSRequestHandler* req);
     static void HandleGetCurrentSceneCollection(WSRequestHandler* req);
@@ -152,6 +153,7 @@ class WSRequestHandler : public QObject {
     static void HandleClearSession(WSRequestHandler* req);
     static void HandleClearScene(WSRequestHandler* req);
     static void HandleRefreshSource(WSRequestHandler* req);
+    static void HandleOverlayUpdate(WSRequestHandler* req);
     
     // outputs
     static void SetupStreamingOutput(WSRequestHandler* req);

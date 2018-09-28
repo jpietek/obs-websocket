@@ -37,6 +37,7 @@ class CustomSources : public QObject {
       static void HandleClearSession(WSRequestHandler* req);
       static void HandleClearScene(WSRequestHandler* req);
       static void RefreshSource(WSRequestHandler* req);
+      static void UpdateOverlay(WSRequestHandler* req);
       
       static bool ActivateSource(obs_scene_t* scene, obs_sceneitem_t* item, void* params);
 };

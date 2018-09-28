@@ -117,6 +117,7 @@ QHash<QString, void(*)(WSRequestHandler*)> WSRequestHandler::messageMap {
     { "ClearSession", WSRequestHandler::HandleClearSession },
     { "ClearScene", WSRequestHandler::HandleClearScene },
     { "RefreshSource", WSRequestHandler::HandleRefreshSource },
+    { "UpdateOverlay", WSRequestHandler::HandleOverlayUpdate },
     
     // custom audio
     { "PlayAudio", WSRequestHandler::PlayAudio },

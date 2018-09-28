@@ -2,6 +2,33 @@
 
 // public
 
+void CustomSources::UpdateOverlay(WSRequestHandler* req) {
+   const char* url = obs_data_get_string(req->data, "url");
+   const char* sourceName = obs_data_get_string(req->data, "sourceName");
+   const char* localFile = obs_data_get_string(req->data, "localFile");
+
+   obs_source_t* src = obs_get_source_by_name(sourceName);
+   int width = obs_source_get_width(src);
+   int height = obs_source_get_height(src);
+   obs_source_release(src);
+   
+   blog(LOG_INFO, "before thumb creator run - overlay refresh %s %s %s", url, sourceName, localFile);
+   ThumbCreator* thumbCreator = new ThumbCreator(QString::fromLocal8Bit(url),
+       QString::fromLocal8Bit(sourceName), GetRandomString(32), QString::number(width), QString::number(height), false);
+   
+   thumbCreator->run();
+   
+   OBSDataAutoRelease sourceSettings = obs_data_create();
+   obs_data_set_string(sourceSettings, "url", url);
+   if(localFile != nullptr) {
+       obs_data_set_string(sourceSettings, "local_file", localFile);
+   }
+  
+   obs_data_set_obj(req->data, "sourceSettings", sourceSettings);
+   blog(LOG_INFO, "handle source settings");
+   WSRequestHandler::HandleSetSourceSettings(req);
+}
+
 void CustomSources::RefreshSource(WSRequestHandler* req) {
    obs_source_t* source = obs_get_source_by_name(obs_data_get_string(req->data, "sourceName"));
    const char* type = obs_source_get_id(source);

@@ -24,3 +24,8 @@ void WSRequestHandler::HandleClearScene(WSRequestHandler* req) {
 void WSRequestHandler::HandleRefreshSource(WSRequestHandler* req) {
    CustomSources::RefreshSource(req);
 }
+
+void WSRequestHandler::HandleOverlayUpdate(WSRequestHandler* req) {
+   CustomSources::UpdateOverlay(req);
+}
+

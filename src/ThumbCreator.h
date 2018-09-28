@@ -95,17 +95,20 @@ class ThumbCreator : public QThread {
       file.remove();
       
       QString cdnPrefix = getenv("CDN_PREFIX");
+      blog(LOG_INFO, "cdn prefix: %s", cdnPrefix.toStdString().c_str());
       QString url = "https://" + cdnPrefix + "/vt/" + fileName;
-      blog(LOG_INFO, "image url: %s", url.toUtf8());      
+      blog(LOG_INFO, "image url: %s", url.toStdString().c_str());      
       srcData["thumbUrl"] = url;
       
       if(this->isMedia) {
+         blog(LOG_INFO, "wait for resolution future to finish");
          future.waitForFinished();
+         blog(LOG_INFO, "after resolution future");
          QStringList dimensions = future.result();
          srcData["width"] = dimensions[0];
          srcData["height"] = dimensions[1];
       }
-  
+      blog(LOG_INFO, "before insert thumb");
       ProcessedThumbs::insertThumb(this->source_name, srcData);
    }
 };
