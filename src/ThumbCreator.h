@@ -52,14 +52,18 @@ class ThumbCreator : public QThread {
             blog(LOG_INFO, "ffprobe finished");
             QString output(ffprobe.readLine());
             blog(LOG_INFO, "ffprobe got output");
-            QStringList size = output.split('x');
-         
-            int width = size[0].toInt();
-            int height = size[1].toInt();
-            blog(LOG_INFO, "media source dimensions: %i %i", width, height);   
+            QStringList dimensions = output.split('x');
             
             QStringList out;
-            out << size[0] << size[1];
+            if(dimensions.size() != 2) {
+               return out;
+            }
+            
+            int width = dimensions[0].toInt();
+            int height = dimensions[1].toInt();
+            blog(LOG_INFO, "media source dimensions: %i %i", width, height);   
+            
+            out << dimensions[0] << dimensions[1];
             return out;
          });
       }
@@ -105,8 +109,10 @@ class ThumbCreator : public QThread {
          future.waitForFinished();
          blog(LOG_INFO, "after resolution future");
          QStringList dimensions = future.result();
-         srcData["width"] = dimensions[0];
-         srcData["height"] = dimensions[1];
+         if(!dimensions.isEmpty()) {
+            srcData["width"] = dimensions[0];
+            srcData["height"] = dimensions[1];
+         }
       }
       blog(LOG_INFO, "before insert thumb");
       ProcessedThumbs::insertThumb(this->source_name, srcData);

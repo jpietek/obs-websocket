@@ -75,6 +75,7 @@ void CustomSources::HandleAddMediaSource(WSRequestHandler* req) {
   const char* source_name = obs_data_get_string(req->data, "sourceName");
   
   bool sourceReference = obs_data_get_bool(req->data, "sourceReference");
+  bool audioSource = obs_data_get_bool(req->data, "audioSource");
   
   obs_source_t* existing_source = obs_get_source_by_name(source_name);
   if(existing_source != nullptr && !sourceReference) {
@@ -107,11 +108,13 @@ void CustomSources::HandleAddMediaSource(WSRequestHandler* req) {
 
      blog(LOG_INFO, "before src thumb data struct");
      
-     ThumbCreator* thumbCreator = new ThumbCreator(QString::fromLocal8Bit(input_url),
+     if(!audioSource) {
+      ThumbCreator* thumbCreator = new ThumbCreator(QString::fromLocal8Bit(input_url),
          QString::fromLocal8Bit(source_name), GetRandomString(32), "", "", true);
      
-     blog(LOG_INFO, "before thumb creator run");
-     thumbCreator->run();
+      blog(LOG_INFO, "before thumb creator run");
+      thumbCreator->run();
+     }
   }
   
   obs_scene_t* new_scene = obs_scene_from_source(obs_get_source_by_name(scene_name));
