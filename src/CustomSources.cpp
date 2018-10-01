@@ -318,6 +318,8 @@ void CustomSources::ClearScene(const char* name) {
 bool CustomSources::ActivateSource(obs_scene_t* scene, obs_sceneitem_t* item, void* params) {
    obs_source_t* s = obs_sceneitem_get_source(item);
    const char* sourceName = obs_source_get_name(s);
+   
+   // re-add only video sources while transitioning to program
    const char* type = obs_source_get_id(s);
    if(strcmp(type, "ffmpeg_source") != 0) {
       return true;
@@ -325,7 +327,9 @@ bool CustomSources::ActivateSource(obs_scene_t* scene, obs_sceneitem_t* item, vo
    
    obs_data_t* sourceSettings = obs_source_get_settings(s);   
    
-   RemoveSourceByName(sourceName);
+   blog(LOG_INFO, "before remove source %s", sourceName);
+   obs_source_remove(s);
+   
    obs_source_t* restartedSource = obs_source_create("ffmpeg_source", sourceName, sourceSettings, NULL);
    
    AddSourceData data;
@@ -336,6 +340,7 @@ bool CustomSources::ActivateSource(obs_scene_t* scene, obs_sceneitem_t* item, vo
    obs_scene_atomic_update(scene, AddSource, &data);
    obs_leave_graphics();
    
+   blog(LOG_INFO, "after source reactivate");
    obs_source_release(restartedSource);
    return true;
 }
@@ -350,7 +355,7 @@ void CustomSources::RemoveSourceByName(const char* sourceNameToRemove) {
       obs_source_t* curSrc = obs_sceneitem_get_source(item);
       const char* curSourceName = obs_source_get_name(curSrc);
       const char* sourceNameToRemove = (const char*) params;
-      blog(LOG_INFO, "remove src to remove vs cur preview src: %s %s", curSourceName, sourceNameToRemove);
+      blog(LOG_INFO, "src to remove vs cur preview src: %s %s", curSourceName, sourceNameToRemove);
        if(strcmp(curSourceName, sourceNameToRemove) == 0) {
           blog(LOG_INFO, "removing current preview source, set blank scene as preview");
           obs_source_t* blankScene = Utils::GetSceneFromNameOrCurrent("Scene 9");

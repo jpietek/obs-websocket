@@ -69,11 +69,18 @@ void WSRequestHandler::HandleSetPreviewScene(WSRequestHandler* req) {
     }
 
     if (!req->hasField("scene-name")) {
-        req->SendErrorResponse("missing request parameters");
+        req->SendErrorResponse("missing request parameters: scene-name");
+        return;
+    }
+    
+    if (!req->hasField("reactivateSources")) {
+        req->SendErrorResponse("missing request parameters: reactivateSources");
         return;
     }
 
     const char* sceneName = obs_data_get_string(req->data, "scene-name");
+    bool reactivateSources = obs_data_get_bool(req->data, "reactivateSources");
+    
     obs_source_t* scene = Utils::GetSceneFromNameOrCurrent(sceneName);
 
     obs_source_t* programSource = obs_frontend_get_current_preview_scene();
@@ -82,8 +89,16 @@ void WSRequestHandler::HandleSetPreviewScene(WSRequestHandler* req) {
     
     if (scene) {
       // re-activate sources only if the scene is not on program / not to break ongoing live-stream
-      if(strcmp(programSceneName, sceneName) == 0) {
+      // plus check the FR reactivateSources flag, don't reactivate on initial set preview
+      blog(LOG_INFO, "compare program scene: %s %s", programSceneName, sceneName);
+      if(reactivateSources && strcmp(programSceneName, sceneName) != 0) {
+         obs_source_t* curPreview = obs_frontend_get_current_preview_scene();
+         obs_source_t* blankScene = Utils::GetSceneFromNameOrCurrent("Scene 9");
+         obs_frontend_set_current_preview_scene(blankScene);
+         obs_source_release(blankScene);
          obs_scene_enum_items(obs_scene_from_source(scene), CustomSources::ActivateSource, nullptr);
+         obs_frontend_set_current_preview_scene(curPreview);
+         obs_source_release(curPreview);
       }
       obs_frontend_set_current_preview_scene(scene);
       req->SendOKResponse();
@@ -110,6 +125,13 @@ void WSRequestHandler::HandleTransitionToProgram(WSRequestHandler* req) {
         req->SendErrorResponse("studio mode not enabled");
         return;
     }
+    
+    if (!req->hasField("reactivateSources")) {
+      req->SendErrorResponse("missing request parameters");
+      return;
+    }
+    
+    bool reactivateSources = obs_data_get_bool(req->data, "reactivateSources");
 
     if (req->hasField("with-transition")) {
         OBSDataAutoRelease transitionInfo =
@@ -136,9 +158,22 @@ void WSRequestHandler::HandleTransitionToProgram(WSRequestHandler* req) {
             Utils::SetTransitionDuration(transitionDuration);
         }
     }
-
-    Utils::TransitionToProgram();
-    req->SendOKResponse();
+    
+   obs_source_t* src = obs_frontend_get_current_preview_scene();
+   if(reactivateSources && src != nullptr) {
+      obs_source_t* curPreview = obs_frontend_get_current_preview_scene();
+      obs_source_t* blankScene = Utils::GetSceneFromNameOrCurrent("Scene 9");
+      obs_frontend_set_current_preview_scene(blankScene);
+      obs_source_release(blankScene);
+      
+      obs_scene_enum_items(obs_scene_from_source(src), CustomSources::ActivateSource, nullptr);
+      obs_frontend_set_current_preview_scene(curPreview);
+      
+      obs_source_release(curPreview);
+   }
+    
+   Utils::TransitionToProgram();
+   req->SendOKResponse();
 }
 
 /**
