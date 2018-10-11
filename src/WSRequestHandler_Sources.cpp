@@ -1,6 +1,7 @@
 #include <QString>
 #include "Utils.h"
 #include <cstdlib>
+#include "sanity_checks.h"
 
 #include "WSRequestHandler.h"
 #include "WSEvents.h"
@@ -484,8 +485,26 @@ void WSRequestHandler::HandleSetSourceSettings(WSRequestHandler* req) {
         }
     }
 
-    OBSDataAutoRelease currentSettings = obs_source_get_settings(source);
     OBSDataAutoRelease newSettings = obs_data_get_obj(req->data, "sourceSettings");
+    {
+        const char* s = obs_data_get_string(newSettings, "local_file");
+        if (s!=NULL && !is_filename_sane(s)) {
+            req->SendErrorResponse("local_file path insane");
+            return;
+        }
+        s = obs_data_get_string(newSettings, "input");
+        if (s!=NULL && !is_url_sane(s)) {
+            req->SendErrorResponse("input URL insane");
+            return;
+        }
+        s = obs_data_get_string(newSettings, "url");
+        if (s!=NULL && !is_url_sane(s)) {
+            req->SendErrorResponse("url insane");
+            return;
+        }
+    }
+    
+    OBSDataAutoRelease currentSettings = obs_source_get_settings(source);
 
     OBSDataAutoRelease sourceSettings = obs_data_create();
     obs_data_apply(sourceSettings, currentSettings);

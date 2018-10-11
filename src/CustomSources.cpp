@@ -1,4 +1,5 @@
 #include "CustomSources.h"
+#include "sanity_checks.h"
 
 // public
 
@@ -73,6 +74,12 @@ void CustomSources::HandleAddMediaSource(WSRequestHandler* req) {
   
   const char* scene_name = obs_data_get_string(req->data, "sceneName");
   const char* source_name = obs_data_get_string(req->data, "sourceName");
+  const char* input_url = obs_data_get_string(req->data, "url");
+  if (!is_url_sane(input_url)) {
+      blog(LOG_WARNING, "Not sane URL: %s", input_url);
+      req->SendErrorResponse("url insane");
+      return;
+  }
   
   bool sourceReference = obs_data_get_bool(req->data, "sourceReference");
   bool audioSource = obs_data_get_bool(req->data, "audioSource");
@@ -93,7 +100,7 @@ void CustomSources::HandleAddMediaSource(WSRequestHandler* req) {
      obs_source_release(existing_source);
   
      OBSDataAutoRelease source_settings = obs_data_create();
-     const char* input_url = obs_data_get_string(req->data, "url");
+     
      bool loop = obs_data_get_bool(req->data, "loop");
      
      obs_data_set_bool(source_settings, "is_local_file", false);
@@ -192,6 +199,19 @@ void CustomSources::HandleAddBrowserSource(WSRequestHandler* req) {
   const char* source_name = obs_data_get_string(req->data, "sourceName");
   double fps = obs_data_get_double(req->data, "fps");
   bool local = obs_data_get_bool(req->data, "isLocal");
+  if (local) {
+      const char* fn = obs_data_get_string(req->data, "localFile");
+      if (!is_filename_sane(fn)) {
+          req->SendErrorResponse("insane localFile path");
+          return;
+      }
+  } else {
+      const char* url = obs_data_get_string(req->data, "url");
+      if (!is_url_sane(url)) {
+          req->SendErrorResponse("insane url");
+          return;
+      }
+  }
   
   bool sourceReference = obs_data_get_bool(req->data, "sourceReference");
   
