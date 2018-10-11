@@ -109,6 +109,9 @@ void CustomSources::HandleAddMediaSource(WSRequestHandler* req) {
      obs_data_set_string(source_settings, "input", input_url);
      obs_data_set_bool(source_settings, "restart_on_activate", false);
      obs_data_set_bool(source_settings, "looping", loop);
+     if (loop) {
+         obs_data_set_bool(source_settings, "seekable", true);
+     }
      
      blog(LOG_INFO, "source created:  %s", source_name);
      src = obs_source_create("ffmpeg_source", source_name, source_settings, NULL);
