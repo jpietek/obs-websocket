@@ -67,19 +67,18 @@ void WSRequestHandler::HandleSetPreviewScene(WSRequestHandler* req) {
         req->SendErrorResponse("studio mode not enabled");
         return;
     }
-
+    
     if (!req->hasField("scene-name")) {
         req->SendErrorResponse("missing request parameters: scene-name");
         return;
     }
     
-    if (!req->hasField("reactivateSources")) {
-        req->SendErrorResponse("missing request parameters: reactivateSources");
-        return;
+    bool reactivateSources = false;
+    if (req->hasField("reactivateSources")) {
+        reactivateSources = obs_data_get_bool(req->data, "reactivateSources");
     }
-
+    
     const char* sceneName = obs_data_get_string(req->data, "scene-name");
-    bool reactivateSources = obs_data_get_bool(req->data, "reactivateSources");
     
     obs_source_t* scene = Utils::GetSceneFromNameOrCurrent(sceneName);
 
