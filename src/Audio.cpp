@@ -20,6 +20,24 @@ bool Audio::isAudioMonitorStarted() {
    return audioMonitorStarted;
 }
 
+obs_data_t* Audio::GetAudioOutputOpts(const char* sceneName) {
+   obs_source_t* programSource = obs_frontend_get_current_scene();
+   const char* programName = obs_source_get_name(programSource);
+   obs_source_release(programSource);
+  
+   blog(LOG_INFO, "compare scene with program: %s %s", sceneName, programName);
+   OBSData audio_opts = obs_data_create();
+   if(strcmp(sceneName, programName) == 0) {
+      blog(LOG_INFO, "source from active scene, output true");
+      obs_data_set_bool(audio_opts, "output", true);
+   } else {
+      blog(LOG_INFO, "source not from current scene, output false");
+      obs_data_set_bool(audio_opts, "output", false);
+   }
+   
+   return audio_opts;
+}
+
 
 QHash<QString, double> Audio::GetAudioLevels() {
    return audioMonitorLevel;
@@ -40,26 +58,14 @@ void Audio::SetProgramAudioVolume(WSRequestHandler* req) {
 }
 
 void Audio::PlayAudio(WSRequestHandler* req) {
-   const char* name = obs_data_get_string(req->data, "sceneName");
-   obs_source_t* s = obs_get_source_by_name(name);
+   const char* sceneName = obs_data_get_string(req->data, "sceneName");
+   obs_source_t* s = obs_get_source_by_name(sceneName);
    obs_source_set_muted(s, false);
   
-   blog(LOG_INFO, "switch audio monitor source: %s", name);
+   blog(LOG_INFO, "switch audio monitor source: %s", sceneName);
    obs_enum_sources(TurnOffSourceAudio, nullptr);
-  
-   obs_source_t* programSource = obs_frontend_get_current_scene();
-   const char* programName = obs_source_get_name(programSource);
-   obs_source_release(programSource);
-  
-   blog(LOG_INFO, "compare scene with program: %s %s", name, programName);
-   OBSData audio_opts = obs_data_create();
-   if(strcmp(name, programName) == 0) {
-      blog(LOG_INFO, "source from active scene, output true");
-      obs_data_set_bool(audio_opts, "output", true);
-   } else {
-      blog(LOG_INFO, "source not from current scene, output false");
-      obs_data_set_bool(audio_opts, "output", false);
-   }
+   
+   obs_data_t* audio_opts = Audio::GetAudioOutputOpts(sceneName);
   
    blog(LOG_INFO, "turn on audio monitor");
    obs_scene_t* scene = obs_scene_from_source(s);
@@ -140,7 +146,7 @@ bool Audio::TurnOnSourceAudioMonitor(obs_source_t* source, obs_data_t* audio_opt
    obs_volmeter_add_callback(volmeter, HandleVolumeLevel, data);
 
    audioMonitorMap.insert(sourceName, volmeter);
-  
+   
    blog(LOG_INFO, "setup source buffer %s", sourceName);
    boost::circular_buffer<double>* buf = new boost::circular_buffer<double>(25);
    buf->set_capacity(25);

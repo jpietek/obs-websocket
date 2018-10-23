@@ -5,6 +5,7 @@
 
 #include "WSRequestHandler.h"
 #include "WSEvents.h"
+#include "Audio.h"
 
 /**
 * List all sources available in the running OBS instance
@@ -222,6 +223,19 @@ void WSRequestHandler::HandleGetVolume(WSRequestHandler* req) {
     }
 
     obs_source_set_volume(source, sourceVolume);
+    
+    const char* sceneName = obs_data_get_string(req->data, "scene");    
+    if(sceneName == nullptr) {
+       req->SendOKResponse();
+    }
+    
+    float currentVolume = obs_source_get_volume(source);
+    if(currentVolume == 0.0 && sourceVolume > 0) {
+       blog(LOG_INFO, "unmuting source, restart audio monitoring: %s %s", obs_source_get_name(source), sceneName);
+       obs_data_t* outputOpts = Audio::GetAudioOutputOpts(sceneName);
+       Audio::TurnOnSourceAudioMonitor(source, outputOpts);
+    }
+    
     req->SendOKResponse();
 }
 
