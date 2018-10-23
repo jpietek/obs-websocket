@@ -634,8 +634,17 @@ void WSEvents::UpdateAudioMonitor() {
       return;
    }
 
-   obs_data_t* sources = Audio::GetAudioLevels();
-
+   QHash<QString, double> levels = Audio::GetAudioLevels();
+   OBSDataAutoRelease sources = obs_data_create();
+   
+   for (QHash<QString, double>::const_iterator it = levels.cbegin(), 
+      end = levels.cend(); it != end; ++it) {
+      QString sourceName = it.key();
+      OBSDataAutoRelease levels = obs_data_create();
+      obs_data_set_double(levels, "peak", it.value());
+      obs_data_set_obj(sources, sourceName.toUtf8(), levels);
+   }
+   
    obs_data_set_obj(data, "sources", sources);
    WSEvents::Instance->broadcastUpdate("AudioMonitor", data);
 }

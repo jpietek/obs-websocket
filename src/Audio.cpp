@@ -1,7 +1,7 @@
 #include "Audio.h"
 
 QHash<QString, obs_volmeter_t*> Audio::audioMonitorMap;
-QHash<QString, obs_data_t*> Audio::audioMonitorLevel;
+QHash<QString, double> Audio::audioMonitorLevel;
 QHash<QString, boost::circular_buffer<double>*> Audio::audioBuffer;
 QMutex Audio::audioLock;
 bool Audio::audioMonitorStarted = false;
@@ -20,17 +20,9 @@ bool Audio::isAudioMonitorStarted() {
    return audioMonitorStarted;
 }
 
-obs_data_t* Audio::GetAudioLevels() {
-   obs_data_t* sources = obs_data_create();
 
-   for (QHash<QString, obs_data_t*>::const_iterator it = audioMonitorLevel.cbegin(), 
-      end = audioMonitorLevel.cend(); it != end; ++it) {
-      QString sourceName = it.key();
-      obs_data_t* audioLevels = it.value();
-      obs_data_set_obj(sources, sourceName.toUtf8(), audioLevels);
-   }
-
-   return sources;
+QHash<QString, double> Audio::GetAudioLevels() {
+   return audioMonitorLevel;
 }
 
 void Audio::SetProgramAudioVolume(WSRequestHandler* req) {   
@@ -126,6 +118,10 @@ void Audio::StopAudio(WSRequestHandler* req) {
 bool Audio::TurnOnSourceAudioMonitor(obs_source_t* source, obs_data_t* audio_opts) {
    const char* sourceName = obs_source_get_name(source);
   
+   if(audioMonitorMap.contains(sourceName)) {
+      blog(LOG_INFO, "monitor for source already exists: %s", sourceName);
+   }
+   
    blog(LOG_INFO, "switch audio monitor source: %s", sourceName);
    if(obs_data_get_bool(audio_opts, "output")) {
       obs_source_set_monitoring_type(source, (obs_monitoring_type)2);
@@ -161,6 +157,8 @@ bool Audio::TurnOffSourceAudio(void *p, obs_source* source) {
    audioLock.lock();
    obs_volmeter_t* volmeter = audioMonitorMap[sourceName];
    obs_volmeter_destroy(volmeter);
+   delete audioBuffer[sourceName];
+   audioBuffer.remove(sourceName);
    audioMonitorMap.remove(sourceName);
    audioMonitorLevel.remove(sourceName);
    audioLock.unlock();
@@ -172,10 +170,13 @@ bool Audio::TurnOffAudioMonitor(obs_scene_t *scene, obs_sceneitem_t *item, void 
    obs_source_set_monitoring_type(source, (obs_monitoring_type)0);
   
    audioLock.lock();
+   
    obs_volmeter_t* volmeter = audioMonitorMap[sourceName];
    obs_volmeter_destroy(volmeter);
    audioMonitorMap.remove(sourceName);
+   
    audioMonitorLevel.remove(sourceName);
+   
    audioLock.unlock();
    return true;
 }
@@ -193,21 +194,10 @@ void Audio::HandleVolumeLevel(void *data, const float magnitude[MAX_AUDIO_CHANNE
    buf->push_back((double)peak[0]);
    
    double maxPeak = -60.0;
-   double pows = 0;
    for(int i = 0; i < buf->size(); i++) {
       maxPeak = std::max(buf->at(i), maxPeak);
-      pows += std::pow(buf->at(i), 2);
    }
    
-   double rms = std::sqrt(pows / 25.0);
-
-   obs_data_t* levels = obs_data_create();
-   
    double maxPeakNormalized = (maxPeak + 60.0) / 60.0;
-   double inputPeakNormalized = ((double) peak[0] + 60.0) / 60.0;
-   
-   obs_data_set_double(levels, "peak", maxPeakNormalized);
-   obs_data_set_double(levels, "input peak", inputPeakNormalized);
-	
-   audioMonitorLevel[sourceName] = levels;
+   audioMonitorLevel[sourceName] = maxPeakNormalized;
 }

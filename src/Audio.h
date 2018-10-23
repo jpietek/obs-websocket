@@ -23,7 +23,7 @@ class Audio : public QObject {
     
    private:
       static QHash<QString, obs_volmeter_t*> audioMonitorMap;
-      static QHash<QString, obs_data_t*> audioMonitorLevel;
+      static QHash<QString, double> audioMonitorLevel;
       static QHash<QString, boost::circular_buffer<double>*> audioBuffer;
       
       static bool audioMonitorStarted;
@@ -40,7 +40,7 @@ class Audio : public QObject {
       static void SetProgramAudioVolume(WSRequestHandler* req);
       static void PlayAudio(WSRequestHandler* req);
       static void StopAudio(WSRequestHandler* req);
-      static obs_data_t* GetAudioLevels();
+      static QHash<QString, double> GetAudioLevels();
       static bool areLevelsEmpty();
       static void startAudioMonitor();
       static bool isAudioMonitorStarted();
