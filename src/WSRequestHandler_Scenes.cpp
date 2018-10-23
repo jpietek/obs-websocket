@@ -113,7 +113,7 @@ void WSRequestHandler::HandleSetSceneItemOrder(WSRequestHandler* req) {
         obs_sceneitem_t* sceneItem = Utils::GetSceneItemFromItem(scene, item);
         if (!sceneItem) {
             req->SendErrorResponse("Invalid sceneItem id or name in order");
-	    blog(LOG_INFO, "can't get scene item");
+            blog(LOG_INFO, "can't get scene item");
             return;
         }
         
@@ -132,12 +132,10 @@ void WSRequestHandler::HandleSetSceneItemOrder(WSRequestHandler* req) {
     }
 
     
-    if (obs_scene_reorder_items(obs_scene_from_source(scene), newOrder.data(), count)) {
-        req->SendOKResponse();
-    }
-    else {
-        req->SendErrorResponse("Invalid sceneItem order");
-    }
+    bool res = obs_scene_reorder_items(obs_scene_from_source(scene), newOrder.data(), count);
+    blog(LOG_INFO, "scene reoder result %i", res);
+    req->SendOKResponse();
+
     for (size_t i = 0; i < count; i++) {
         obs_sceneitem_release(newOrder[i]);
     }
