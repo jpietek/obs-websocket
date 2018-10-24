@@ -199,6 +199,7 @@ void WSRequestHandler::HandleGetVolume(WSRequestHandler* req) {
  * @category sources
  * @since 4.0.0
  */
+
  void WSRequestHandler::HandleSetVolume(WSRequestHandler* req) {
     if (!req->hasField("source") ||
         !req->hasField("volume"))

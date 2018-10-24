@@ -92,7 +92,9 @@ void WSRequestHandler::HandleGetSceneList(WSRequestHandler* req) {
 */
 void WSRequestHandler::HandleSetSceneItemOrder(WSRequestHandler* req) {
     QString sceneName = obs_data_get_string(req->data, "scene");
-    OBSSourceAutoRelease scene = Utils::GetSceneFromNameOrCurrent(sceneName);
+    
+    obs_scene_t* scene = obs_scene_from_source(Utils::GetSceneFromNameOrCurrent(sceneName));
+    
     if (!scene) {
         req->SendErrorResponse("requested scene doesn't exist");
         return;
@@ -105,12 +107,22 @@ void WSRequestHandler::HandleSetSceneItemOrder(WSRequestHandler* req) {
     }
 
     size_t count = obs_data_array_count(items);
-
-    std::vector<obs_sceneitem_t*> newOrder;
-    newOrder.reserve(count);
+    
+    std::vector<obs_sceneitem_t*>* newOrder = new std::vector<obs_sceneitem_t*>();
+    
+    auto checkVisibility = [](obs_scene_t* scene, obs_sceneitem_t* item, void* params) -> bool {
+      if(!obs_sceneitem_visible(item)) {
+         std::vector<obs_sceneitem_t*>* order = (std::vector<obs_sceneitem_t*>*) params;
+         order->push_back(item);
+      }
+      return true;
+  };
+  
+  obs_scene_enum_items(scene, checkVisibility, newOrder);
+    
     for (size_t i = 0; i < count; i++) {
         OBSDataAutoRelease item = obs_data_array_item(items, i);
-        obs_sceneitem_t* sceneItem = Utils::GetSceneItemFromItem(scene, item);
+        obs_sceneitem_t* sceneItem = Utils::GetSceneItemFromItem(obs_scene_get_source(scene), item);
         if (!sceneItem) {
             req->SendErrorResponse("Invalid sceneItem id or name in order");
             blog(LOG_INFO, "can't get scene item");
@@ -118,25 +130,28 @@ void WSRequestHandler::HandleSetSceneItemOrder(WSRequestHandler* req) {
         }
         
         blog(LOG_INFO, "got scene item");
-        /*for (size_t j = 0; j < i; j++) {
-            if (sceneItem == newOrder[j]) {
+        for (size_t j = 0; j < i; j++) {
+            if (sceneItem == newOrder->at(j)) {
                 req->SendErrorResponse("Duplicate sceneItem in specified order");
                 for (size_t i = 0; i < count; i++) {
-                    obs_sceneitem_release(newOrder[i]);
+                    obs_sceneitem_release(newOrder->at(i));
                 }
                 return;
             }
-        }*/
+        }
         
-        newOrder.push_back(sceneItem);
+        newOrder->push_back(sceneItem);
     }
-
     
-    bool res = obs_scene_reorder_items(obs_scene_from_source(scene), newOrder.data(), count);
+    bool res = obs_scene_reorder_items(scene, newOrder->data(), count);
     blog(LOG_INFO, "scene reoder result %i", res);
+    
+    obs_scene_release(scene);
+    for (size_t i = 0; i < count; i++) {
+        obs_sceneitem_release(newOrder->at(i));
+    }
+    
     req->SendOKResponse();
 
-    for (size_t i = 0; i < count; i++) {
-        obs_sceneitem_release(newOrder[i]);
-    }
+
 }

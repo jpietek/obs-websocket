@@ -20,14 +20,14 @@ bool Audio::isAudioMonitorStarted() {
    return audioMonitorStarted;
 }
 
-obs_data_t* Audio::GetAudioOutputOpts(const char* sceneName) {
+obs_data_t* Audio::GetAudioOutputOpts(QString sceneName) {
    obs_source_t* programSource = obs_frontend_get_current_scene();
    const char* programName = obs_source_get_name(programSource);
    obs_source_release(programSource);
   
-   blog(LOG_INFO, "compare scene with program: %s %s", sceneName, programName);
+   blog(LOG_INFO, "compare scene with program: %s %s", sceneName.toStdString().c_str(), programName);
    OBSData audio_opts = obs_data_create();
-   if(strcmp(sceneName, programName) == 0) {
+   if(strcmp(sceneName.toStdString().c_str(), programName) == 0) {
       blog(LOG_INFO, "source from active scene, output true");
       obs_data_set_bool(audio_opts, "output", true);
    } else {

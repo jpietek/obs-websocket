@@ -3,6 +3,8 @@
 
 #include "WSRequestHandler.h"
 
+#include "Audio.h"
+
 /**
 * Gets the scene specific properties of the specified source item.
 *
@@ -258,9 +260,19 @@ void WSRequestHandler::HandleSetSceneItemProperties(WSRequestHandler* req) {
 		obs_sceneitem_set_crop(sceneItem, &newCrop);
 	}
 
-  if (obs_data_has_user_value(reqItem, "visible")) {
-    obs_sceneitem_set_visible(sceneItem, obs_data_get_bool(reqItem, "visible"));
-  }
+    if (obs_data_has_user_value(reqItem, "visible")) {
+        obs_source_t* source = obs_sceneitem_get_source(sceneItem);
+        bool visible = obs_data_get_bool(reqItem, "visible");
+        if(!visible) {
+            blog(LOG_INFO, "visibility changed to 0, muting source");
+            obs_source_set_volume(source, 0);
+        } else {
+            obs_source_set_volume(source, 1);
+            obs_data_t* outputOpts = Audio::GetAudioOutputOpts(sceneName);
+            Audio::TurnOnSourceAudioMonitor(source, outputOpts);
+        }
+        obs_sceneitem_set_visible(sceneItem, visible);
+    } 
 
   if (obs_data_has_user_value(reqItem, "locked")) {
     obs_sceneitem_set_locked(sceneItem, obs_data_get_bool(reqItem, "locked"));

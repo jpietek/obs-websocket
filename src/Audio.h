@@ -48,7 +48,7 @@ class Audio : public QObject {
       static bool TurnOnSourceAudioMonitor(obs_source_t* source, obs_data_t* audio_opts);
       static bool TurnOffSourceAudio(void *p, obs_source* source);
       
-      static obs_data_t* GetAudioOutputOpts(const char* sceneName);
+      static obs_data_t* GetAudioOutputOpts(QString sceneName);
 };
 
 #endif
