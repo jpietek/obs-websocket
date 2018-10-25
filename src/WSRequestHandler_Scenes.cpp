@@ -77,19 +77,6 @@ void WSRequestHandler::HandleGetSceneList(WSRequestHandler* req) {
     req->SendOKResponse(data);
 }
 
-/**
-* Changes the order of scene items in the requested scene.
-*
-* @param {String (optional)} `scene` Name of the scene to reorder (defaults to current).
-* @param {Scene|Array} `items` Ordered list of objects with name and/or id specified. Id prefered due to uniqueness per scene
-* @param {int (optional)} `items[].id` Id of a specific scene item. Unique on a scene by scene basis.
-* @param {String (optional)} `items[].name` Name of a scene item. Sufficiently unique if no scene items share sources within the scene.
-*
-* @api requests
-* @name SetSceneItemOrder
-* @category scenes
-* @since unreleased
-*/
 void WSRequestHandler::HandleSetSceneItemOrder(WSRequestHandler* req) {
     QString sceneName = obs_data_get_string(req->data, "scene");
     
@@ -105,22 +92,39 @@ void WSRequestHandler::HandleSetSceneItemOrder(WSRequestHandler* req) {
         req->SendErrorResponse("sceneItem order not specified");
         return;
     }
-
-    size_t count = obs_data_array_count(items);
-    
-    std::vector<obs_sceneitem_t*>* newOrder = new std::vector<obs_sceneitem_t*>();
-    
-    auto checkVisibility = [](obs_scene_t* scene, obs_sceneitem_t* item, void* params) -> bool {
-      if(!obs_sceneitem_visible(item)) {
-         std::vector<obs_sceneitem_t*>* order = (std::vector<obs_sceneitem_t*>*) params;
-         order->push_back(item);
-      }
+   
+   int count = 0;
+   auto countItems = [](obs_scene_t* scene, obs_sceneitem_t* item, void* params) -> bool {
+      (*(int*) params)++;
       return true;
-  };
-  
-  obs_scene_enum_items(scene, checkVisibility, newOrder);
+   };
+   
+   obs_scene_enum_items(scene, countItems, &count);
+   blog(LOG_INFO, "scene item count %i", count);
+
+   size_t visibleCount = obs_data_array_count(items);
+   
+   std::deque<int> emptySlots;
+   std::vector<obs_sceneitem_t*> newOrder;
+   newOrder.reserve(count);
+   blog(LOG_INFO, "after scene check reserve");
     
-    for (size_t i = 0; i < count; i++) {
+   for (int i = 0; i < count; i++) {
+      OBSDataAutoRelease item = obs_data_array_item(items, i);
+      obs_sceneitem_t* sceneItem = Utils::GetSceneItemFromItem(obs_scene_get_source(scene), item);
+      
+      if(!obs_sceneitem_visible(sceneItem)) {
+         newOrder[i] = Utils::GetSceneItemFromItem(obs_scene_get_source(scene), item);
+      } else {
+         blog(LOG_INFO, "scene item visible, pushing empty slot %i", i);
+         emptySlots.push_back(i);
+      }
+   }
+  
+  blog(LOG_INFO, "empty slots size: %i", emptySlots.size());
+  blog(LOG_INFO, "visible count %i", visibleCount);
+  
+    for (size_t i = 0; i < visibleCount; i++) {
         OBSDataAutoRelease item = obs_data_array_item(items, i);
         obs_sceneitem_t* sceneItem = Utils::GetSceneItemFromItem(obs_scene_get_source(scene), item);
         if (!sceneItem) {
@@ -131,27 +135,28 @@ void WSRequestHandler::HandleSetSceneItemOrder(WSRequestHandler* req) {
         
         blog(LOG_INFO, "got scene item");
         for (size_t j = 0; j < i; j++) {
-            if (sceneItem == newOrder->at(j)) {
+            if (sceneItem == newOrder[j]) {
                 req->SendErrorResponse("Duplicate sceneItem in specified order");
                 for (size_t i = 0; i < count; i++) {
-                    obs_sceneitem_release(newOrder->at(i));
-                }
+                    obs_sceneitem_release(newOrder[i]);
+                 }
                 return;
             }
         }
-        
-        newOrder->push_back(sceneItem);
+        int n = emptySlots.front();
+        blog(LOG_INFO, "pop empty slots: %i", n);
+        newOrder[n] = sceneItem;
+        emptySlots.pop_front();
     }
     
-    bool res = obs_scene_reorder_items(scene, newOrder->data(), count);
+    bool res = obs_scene_reorder_items(scene, newOrder.data(), count);
     blog(LOG_INFO, "scene reoder result %i", res);
     
     obs_scene_release(scene);
     for (size_t i = 0; i < count; i++) {
-        obs_sceneitem_release(newOrder->at(i));
+        obs_sceneitem_release(newOrder[i]);
     }
     
     req->SendOKResponse();
-
 
 }
