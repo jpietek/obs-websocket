@@ -136,17 +136,17 @@ void WSRequestHandler::HandleSetSceneItemOrder(WSRequestHandler *req)
     blog(LOG_INFO, "after scene check reserve");
 
     auto addInvisibleItems = [](obs_scene_t *scene, obs_sceneitem_t *item, void *params) -> bool {
-        ReorderParams *args = (ReorderParams *) params;
+        ReorderParams *reorderParams = (ReorderParams *) params;
 
         if (!obs_sceneitem_visible(item))
         {
-            blog(LOG_INFO, "set not visible new order: %i", args->count);
-            args->newOrder->at(args->count) = item;
+            blog(LOG_INFO, "set not visible new order: %i", reorderParams->count);
+            reorderParams->newOrder->at(reorderParams->count) = item;
         } else {
-            blog(LOG_INFO, "scene item visible, pushing empty slot %i", args->count);
-            args->emptySlots->push_back(args->count);
+            blog(LOG_INFO, "scene item visible, pushing empty slot %i", reorderParams->count);
+            reorderParams->emptySlots->push_back(reorderParams->count);
         }
-        args->count++;
+        reorderParams->count++;
         return true;
     };
 
