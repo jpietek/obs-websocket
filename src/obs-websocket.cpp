@@ -28,24 +28,25 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include "Config.h"
 #include "forms/settings-dialog.h"
 
-void ___source_dummy_addref(obs_source_t*) {}
-void ___sceneitem_dummy_addref(obs_sceneitem_t*) {}
-void ___data_dummy_addref(obs_data_t*) {}
-void ___data_array_dummy_addref(obs_data_array_t*) {}
-void ___output_dummy_addref(obs_output_t*) {}
+void ___source_dummy_addref(obs_source_t *) {}
+void ___sceneitem_dummy_addref(obs_sceneitem_t *) {}
+void ___data_dummy_addref(obs_data_t *) {}
+void ___data_array_dummy_addref(obs_data_array_t *) {}
+void ___output_dummy_addref(obs_output_t *) {}
 
 OBS_DECLARE_MODULE()
 OBS_MODULE_USE_DEFAULT_LOCALE("obs-websocket", "en-US")
 
-SettingsDialog* settings_dialog;
+SettingsDialog *settings_dialog;
 
-bool obs_module_load(void) {
+bool obs_module_load(void)
+{
     blog(LOG_INFO, "you can haz websockets (version %s)", OBS_WEBSOCKET_VERSION);
     blog(LOG_INFO, "qt version (compile-time): %s ; qt version (run-time): %s",
-        QT_VERSION_STR, qVersion());
+         QT_VERSION_STR, qVersion());
 
     // Core setup
-    Config* config = Config::Current();
+    Config *config = Config::Current();
     config->Load();
 
     WSServer::Instance = new WSServer();
@@ -55,11 +56,11 @@ bool obs_module_load(void) {
         WSServer::Instance->Start(config->ServerPort);
 
     // UI setup
-    QAction* menu_action = (QAction*)obs_frontend_add_tools_menu_qaction(
-        obs_module_text("OBSWebsocket.Menu.SettingsItem"));
+    QAction *menu_action = (QAction *)obs_frontend_add_tools_menu_qaction(
+                               obs_module_text("OBSWebsocket.Menu.SettingsItem"));
 
     obs_frontend_push_ui_translation(obs_module_get_string);
-    QMainWindow* main_window = (QMainWindow*)obs_frontend_get_main_window();
+    QMainWindow *main_window = (QMainWindow *)obs_frontend_get_main_window();
     settings_dialog = new SettingsDialog(main_window);
     obs_frontend_pop_ui_translation();
 
@@ -74,7 +75,8 @@ bool obs_module_load(void) {
     return true;
 }
 
-void obs_module_unload() {
+void obs_module_unload()
+{
     blog(LOG_INFO, "goodbye!");
 }
 

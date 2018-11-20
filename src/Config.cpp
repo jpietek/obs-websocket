@@ -36,7 +36,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #define QT_TO_UTF8(str) str.toUtf8().constData()
 
-Config* Config::_instance = new Config();
+Config *Config::_instance = new Config();
 
 Config::Config() :
     ServerEnabled(true),
@@ -49,24 +49,24 @@ Config::Config() :
     SettingsLoaded(false)
 {
     // OBS Config defaults
-    config_t* obsConfig = obs_frontend_get_global_config();
+    config_t *obsConfig = obs_frontend_get_global_config();
     if (obsConfig) {
         config_set_default_bool(obsConfig,
-            SECTION_NAME, PARAM_ENABLE, ServerEnabled);
+                                SECTION_NAME, PARAM_ENABLE, ServerEnabled);
         config_set_default_uint(obsConfig,
-            SECTION_NAME, PARAM_PORT, ServerPort);
+                                SECTION_NAME, PARAM_PORT, ServerPort);
 
         config_set_default_bool(obsConfig,
-            SECTION_NAME, PARAM_DEBUG, DebugEnabled);
+                                SECTION_NAME, PARAM_DEBUG, DebugEnabled);
         config_set_default_bool(obsConfig,
-            SECTION_NAME, PARAM_ALERT, AlertsEnabled);
+                                SECTION_NAME, PARAM_ALERT, AlertsEnabled);
 
         config_set_default_bool(obsConfig,
-            SECTION_NAME, PARAM_AUTHREQUIRED, AuthRequired);
+                                SECTION_NAME, PARAM_AUTHREQUIRED, AuthRequired);
         config_set_default_string(obsConfig,
-            SECTION_NAME, PARAM_SECRET, QT_TO_UTF8(Secret));
+                                  SECTION_NAME, PARAM_SECRET, QT_TO_UTF8(Secret));
         config_set_default_string(obsConfig,
-            SECTION_NAME, PARAM_SALT, QT_TO_UTF8(Salt));
+                                  SECTION_NAME, PARAM_SALT, QT_TO_UTF8(Salt));
     }
 
     mbedtls_entropy_init(&entropy);
@@ -76,13 +76,15 @@ Config::Config() :
     SessionChallenge = GenerateSalt();
 }
 
-Config::~Config() {
+Config::~Config()
+{
     mbedtls_ctr_drbg_free(&rng);
     mbedtls_entropy_free(&entropy);
 }
 
-void Config::Load() {
-    config_t* obsConfig = obs_frontend_get_global_config();
+void Config::Load()
+{
+    config_t *obsConfig = obs_frontend_get_global_config();
 
     ServerEnabled = config_get_bool(obsConfig, SECTION_NAME, PARAM_ENABLE);
     ServerPort = config_get_uint(obsConfig, SECTION_NAME, PARAM_PORT);
@@ -95,8 +97,9 @@ void Config::Load() {
     Salt = config_get_string(obsConfig, SECTION_NAME, PARAM_SALT);
 }
 
-void Config::Save() {
-    config_t* obsConfig = obs_frontend_get_global_config();
+void Config::Save()
+{
+    config_t *obsConfig = obs_frontend_get_global_config();
 
     config_set_bool(obsConfig, SECTION_NAME, PARAM_ENABLE, ServerEnabled);
     config_set_uint(obsConfig, SECTION_NAME, PARAM_PORT, ServerPort);
@@ -106,53 +109,56 @@ void Config::Save() {
 
     config_set_bool(obsConfig, SECTION_NAME, PARAM_AUTHREQUIRED, AuthRequired);
     config_set_string(obsConfig, SECTION_NAME, PARAM_SECRET,
-        QT_TO_UTF8(Secret));
+                      QT_TO_UTF8(Secret));
     config_set_string(obsConfig, SECTION_NAME, PARAM_SALT,
-        QT_TO_UTF8(Salt));
+                      QT_TO_UTF8(Salt));
 
     config_save(obsConfig);
 }
 
-QString Config::GenerateSalt() {
+QString Config::GenerateSalt()
+{
     // Generate 32 random chars
-    unsigned char* randomChars = (unsigned char*)bzalloc(32);
+    unsigned char *randomChars = (unsigned char *)bzalloc(32);
     mbedtls_ctr_drbg_random(&rng, randomChars, 32);
 
     // Convert the 32 random chars to a base64 string
-    char* salt = (char*)bzalloc(64);
+    char *salt = (char *)bzalloc(64);
     size_t saltBytes;
     mbedtls_base64_encode(
-        (unsigned char*)salt, 64, &saltBytes,
+        (unsigned char *)salt, 64, &saltBytes,
         randomChars, 32);
 
     bfree(randomChars);
     return salt;
 }
 
-QString Config::GenerateSecret(QString password, QString salt) {
+QString Config::GenerateSecret(QString password, QString salt)
+{
     // Concatenate the password and the salt
     QString passAndSalt = "";
     passAndSalt += password;
     passAndSalt += salt;
 
     // Generate a SHA256 hash of the password
-    unsigned char* challengeHash = (unsigned char*)bzalloc(32);
+    unsigned char *challengeHash = (unsigned char *)bzalloc(32);
     mbedtls_sha256(
-        (unsigned char*)passAndSalt.toUtf8().constData(), passAndSalt.length(),
+        (unsigned char *)passAndSalt.toUtf8().constData(), passAndSalt.length(),
         challengeHash, 0);
 
     // Encode SHA256 hash to Base64
-    char* challenge = (char*)bzalloc(64);
+    char *challenge = (char *)bzalloc(64);
     size_t challengeBytes = 0;
     mbedtls_base64_encode(
-        (unsigned char*)challenge, 64, &challengeBytes,
+        (unsigned char *)challenge, 64, &challengeBytes,
         challengeHash, 32);
 
     bfree(challengeHash);
     return challenge;
 }
 
-void Config::SetPassword(QString password) {
+void Config::SetPassword(QString password)
+{
     QString newSalt = GenerateSalt();
     QString newChallenge = GenerateSecret(password, newSalt);
 
@@ -160,33 +166,34 @@ void Config::SetPassword(QString password) {
     this->Secret = newChallenge;
 }
 
-bool Config::CheckAuth(QString response) {
-  
+bool Config::CheckAuth(QString response)
+{
+
     // here we can add a method to authorize in RTC for tellyo version of obs-websocketo
-  
+
     size_t base64_size = 0;
 //    char* cred_unbased = (char*)bzalloc(64);
 //    mbedtls_base64_decode( (unsigned char*)response.toUtf8().constData(), response.length(), &base64_size, cred_unbased, 32);
-    
+
 //     mbedtls_sha256
-    
+
     // Concatenate auth secret with the challenge sent to the user
     QString challengeAndResponse = "";
     challengeAndResponse += Secret;
     challengeAndResponse += SessionChallenge;
 
     // Generate a SHA256 hash of challengeAndResponse
-    unsigned char* hash = (unsigned char*)bzalloc(32);
+    unsigned char *hash = (unsigned char *)bzalloc(32);
     mbedtls_sha256(
-        (unsigned char*)challengeAndResponse.toUtf8().constData(),
+        (unsigned char *)challengeAndResponse.toUtf8().constData(),
         challengeAndResponse.length(),
         hash, 0);
 
     // Encode the SHA256 hash to Base64
-    char* expectedResponse = (char*)bzalloc(64);
-    
+    char *expectedResponse = (char *)bzalloc(64);
+
     mbedtls_base64_encode(
-        (unsigned char*)expectedResponse, 64, &base64_size,
+        (unsigned char *)expectedResponse, 64, &base64_size,
         hash, 32);
 
     bool authSuccess = false;
@@ -200,6 +207,7 @@ bool Config::CheckAuth(QString response) {
     return authSuccess;
 }
 
-Config* Config::Current() {
+Config *Config::Current()
+{
     return _instance;
 }

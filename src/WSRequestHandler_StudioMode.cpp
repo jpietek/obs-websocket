@@ -14,7 +14,8 @@
  * @category studio mode
  * @since 4.1.0
  */
- void WSRequestHandler::HandleGetStudioModeStatus(WSRequestHandler* req) {
+void WSRequestHandler::HandleGetStudioModeStatus(WSRequestHandler *req)
+{
     bool previewActive = obs_frontend_preview_program_mode_active();
 
     OBSDataAutoRelease response = obs_data_create();
@@ -35,7 +36,8 @@
  * @category studio mode
  * @since 4.1.0
  */
-void WSRequestHandler::HandleGetPreviewScene(WSRequestHandler* req) {
+void WSRequestHandler::HandleGetPreviewScene(WSRequestHandler *req)
+{
     if (!obs_frontend_preview_program_mode_active()) {
         req->SendErrorResponse("studio mode not enabled");
         return;
@@ -62,45 +64,46 @@ void WSRequestHandler::HandleGetPreviewScene(WSRequestHandler* req) {
  * @category studio mode
  * @since 4.1.0
  */
-void WSRequestHandler::HandleSetPreviewScene(WSRequestHandler* req) {
+void WSRequestHandler::HandleSetPreviewScene(WSRequestHandler *req)
+{
     if (!obs_frontend_preview_program_mode_active()) {
         req->SendErrorResponse("studio mode not enabled");
         return;
     }
-    
+
     if (!req->hasField("scene-name")) {
         req->SendErrorResponse("missing request parameters: scene-name");
         return;
     }
-    
+
     bool reactivateSources = false;
     if (req->hasField("reactivateSources")) {
         reactivateSources = obs_data_get_bool(req->data, "reactivateSources");
     }
-    
-    const char* sceneName = obs_data_get_string(req->data, "scene-name");
-    
-    obs_source_t* scene = Utils::GetSceneFromNameOrCurrent(sceneName);
 
-    obs_source_t* programSource = obs_frontend_get_current_preview_scene();
-    const char* programSceneName = obs_source_get_name(programSource);
+    const char *sceneName = obs_data_get_string(req->data, "scene-name");
+
+    obs_source_t *scene = Utils::GetSceneFromNameOrCurrent(sceneName);
+
+    obs_source_t *programSource = obs_frontend_get_current_preview_scene();
+    const char *programSceneName = obs_source_get_name(programSource);
     obs_source_release(programSource);
-    
+
     if (scene) {
-      // re-activate sources only if the scene is not on program / not to break ongoing live-stream
-      // plus check the FR reactivateSources flag, don't reactivate on initial set preview
-      blog(LOG_INFO, "compare program scene: %s %s", programSceneName, sceneName);
-      if(reactivateSources && strcmp(programSceneName, sceneName) != 0) {
-         obs_source_t* curPreview = obs_frontend_get_current_preview_scene();
-         obs_source_t* blankScene = Utils::GetSceneFromNameOrCurrent("Scene 9");
-         obs_frontend_set_current_preview_scene(blankScene);
-         obs_source_release(blankScene);
-         obs_scene_enum_items(obs_scene_from_source(scene), CustomSources::ActivateSource, nullptr);
-         obs_frontend_set_current_preview_scene(curPreview);
-         obs_source_release(curPreview);
-      }
-      obs_frontend_set_current_preview_scene(scene);
-      req->SendOKResponse();
+        // re-activate sources only if the scene is not on program / not to break ongoing live-stream
+        // plus check the FR reactivateSources flag, don't reactivate on initial set preview
+        blog(LOG_INFO, "compare program scene: %s %s", programSceneName, sceneName);
+        if (reactivateSources && strcmp(programSceneName, sceneName) != 0) {
+            obs_source_t *curPreview = obs_frontend_get_current_preview_scene();
+            obs_source_t *blankScene = Utils::GetSceneFromNameOrCurrent("Scene 9");
+            obs_frontend_set_current_preview_scene(blankScene);
+            obs_source_release(blankScene);
+            obs_scene_enum_items(obs_scene_from_source(scene), CustomSources::ActivateSource, nullptr);
+            obs_frontend_set_current_preview_scene(curPreview);
+            obs_source_release(curPreview);
+        }
+        obs_frontend_set_current_preview_scene(scene);
+        req->SendOKResponse();
     } else {
         req->SendErrorResponse("specified scene doesn't exist");
     }
@@ -110,7 +113,7 @@ void WSRequestHandler::HandleSetPreviewScene(WSRequestHandler* req) {
  * Transitions the currently previewed scene to the main output.
  * Will return an `error` if Studio Mode is not enabled.
  *
- * @param {Object (optional)} `with-transition` Change the active transition before switching scenes. Defaults to the active transition. 
+ * @param {Object (optional)} `with-transition` Change the active transition before switching scenes. Defaults to the active transition.
  * @param {String} `with-transition.name` Name of the transition.
  * @param {int (optional)} `with-transition.duration` Transition duration (in milliseconds).
  *
@@ -119,17 +122,18 @@ void WSRequestHandler::HandleSetPreviewScene(WSRequestHandler* req) {
  * @category studio mode
  * @since 4.1.0
  */
-void WSRequestHandler::HandleTransitionToProgram(WSRequestHandler* req) {
+void WSRequestHandler::HandleTransitionToProgram(WSRequestHandler *req)
+{
     if (!obs_frontend_preview_program_mode_active()) {
         req->SendErrorResponse("studio mode not enabled");
         return;
     }
-    
+
     if (!req->hasField("reactivateSources")) {
-      req->SendErrorResponse("missing request parameters");
-      return;
+        req->SendErrorResponse("missing request parameters");
+        return;
     }
-    
+
     bool reactivateSources = obs_data_get_bool(req->data, "reactivateSources");
 
     if (req->hasField("with-transition")) {
@@ -157,22 +161,22 @@ void WSRequestHandler::HandleTransitionToProgram(WSRequestHandler* req) {
             Utils::SetTransitionDuration(transitionDuration);
         }
     }
-    
-   obs_source_t* src = obs_frontend_get_current_preview_scene();
-   if(reactivateSources && src != nullptr) {
-      obs_source_t* curPreview = obs_frontend_get_current_preview_scene();
-      obs_source_t* blankScene = Utils::GetSceneFromNameOrCurrent("Scene 9");
-      obs_frontend_set_current_preview_scene(blankScene);
-      obs_source_release(blankScene);
-      
-      obs_scene_enum_items(obs_scene_from_source(src), CustomSources::ActivateSource, nullptr);
-      obs_frontend_set_current_preview_scene(curPreview);
-      
-      obs_source_release(curPreview);
-   }
-    
-   Utils::TransitionToProgram();
-   req->SendOKResponse();
+
+    obs_source_t *src = obs_frontend_get_current_preview_scene();
+    if (reactivateSources && src != nullptr) {
+        obs_source_t *curPreview = obs_frontend_get_current_preview_scene();
+        obs_source_t *blankScene = Utils::GetSceneFromNameOrCurrent("Scene 9");
+        obs_frontend_set_current_preview_scene(blankScene);
+        obs_source_release(blankScene);
+
+        obs_scene_enum_items(obs_scene_from_source(src), CustomSources::ActivateSource, nullptr);
+        obs_frontend_set_current_preview_scene(curPreview);
+
+        obs_source_release(curPreview);
+    }
+
+    Utils::TransitionToProgram();
+    req->SendOKResponse();
 }
 
 /**
@@ -183,7 +187,8 @@ void WSRequestHandler::HandleTransitionToProgram(WSRequestHandler* req) {
  * @category studio mode
  * @since 4.1.0
  */
-void WSRequestHandler::HandleEnableStudioMode(WSRequestHandler* req) {
+void WSRequestHandler::HandleEnableStudioMode(WSRequestHandler *req)
+{
     obs_frontend_set_preview_program_mode(true);
     req->SendOKResponse();
 }
@@ -196,7 +201,8 @@ void WSRequestHandler::HandleEnableStudioMode(WSRequestHandler* req) {
  * @category studio mode
  * @since 4.1.0
  */
-void WSRequestHandler::HandleDisableStudioMode(WSRequestHandler* req) {
+void WSRequestHandler::HandleDisableStudioMode(WSRequestHandler *req)
+{
     obs_frontend_set_preview_program_mode(false);
     req->SendOKResponse();
 }
@@ -209,7 +215,8 @@ void WSRequestHandler::HandleDisableStudioMode(WSRequestHandler* req) {
  * @category studio mode
  * @since 4.1.0
  */
-void WSRequestHandler::HandleToggleStudioMode(WSRequestHandler* req) {
+void WSRequestHandler::HandleToggleStudioMode(WSRequestHandler *req)
+{
     bool previewProgramMode = obs_frontend_preview_program_mode_active();
     obs_frontend_set_preview_program_mode(!previewProgramMode);
     req->SendOKResponse();

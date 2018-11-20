@@ -11,7 +11,8 @@
  * @category recording
  * @since 0.3
  */
- void WSRequestHandler::HandleStartStopRecording(WSRequestHandler* req) {
+void WSRequestHandler::HandleStartStopRecording(WSRequestHandler *req)
+{
     if (obs_frontend_recording_active())
         obs_frontend_recording_stop();
     else
@@ -29,7 +30,8 @@
  * @category recording
  * @since 4.1.0
  */
- void WSRequestHandler::HandleStartRecording(WSRequestHandler* req) {
+void WSRequestHandler::HandleStartRecording(WSRequestHandler *req)
+{
     if (obs_frontend_recording_active() == false) {
         obs_frontend_recording_start();
         req->SendOKResponse();
@@ -47,7 +49,8 @@
  * @category recording
  * @since 4.1.0
  */
-void WSRequestHandler::HandleStopRecording(WSRequestHandler* req) {
+void WSRequestHandler::HandleStopRecording(WSRequestHandler *req)
+{
     if (obs_frontend_recording_active() == true) {
         obs_frontend_recording_stop();
         req->SendOKResponse();
@@ -66,13 +69,14 @@ void WSRequestHandler::HandleStopRecording(WSRequestHandler* req) {
  * @category recording
  * @since 4.1.0
  */
- void WSRequestHandler::HandleSetRecordingFolder(WSRequestHandler* req) {
+void WSRequestHandler::HandleSetRecordingFolder(WSRequestHandler *req)
+{
     if (!req->hasField("rec-folder")) {
         req->SendErrorResponse("missing request parameters");
         return;
     }
 
-    const char* newRecFolder = obs_data_get_string(req->data, "rec-folder");
+    const char *newRecFolder = obs_data_get_string(req->data, "rec-folder");
     bool success = Utils::SetRecordingFolder(newRecFolder);
     if (success)
         req->SendOKResponse();
@@ -90,8 +94,9 @@ void WSRequestHandler::HandleStopRecording(WSRequestHandler* req) {
  * @category recording
  * @since 4.1.0
  */
-void WSRequestHandler::HandleGetRecordingFolder(WSRequestHandler* req) {
-    const char* recFolder = Utils::GetRecordingFolder();
+void WSRequestHandler::HandleGetRecordingFolder(WSRequestHandler *req)
+{
+    const char *recFolder = Utils::GetRecordingFolder();
 
     OBSDataAutoRelease response = obs_data_create();
     obs_data_set_string(response, "rec-folder", recFolder);

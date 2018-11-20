@@ -22,7 +22,7 @@
 #include "Utils.h"
 #include "WSRequestHandler.h"
 
-QHash<QString, void(*)(WSRequestHandler*)> WSRequestHandler::messageMap {
+QHash<QString, void(*)(WSRequestHandler *)> WSRequestHandler::messageMap {
     { "GetVersion", WSRequestHandler::HandleGetVersion },
     { "GetAuthRequired", WSRequestHandler::HandleGetAuthRequired },
     { "Authenticate", WSRequestHandler::HandleAuthenticate },
@@ -109,7 +109,7 @@ QHash<QString, void(*)(WSRequestHandler*)> WSRequestHandler::messageMap {
 
     { "GetBrowserSourceProperties", WSRequestHandler::HandleGetBrowserSourceProperties },
     { "SetBrowserSourceProperties", WSRequestHandler::HandleSetBrowserSourceProperties },
-  
+
     // dynamic sources
     { "AddBrowserSource", WSRequestHandler::HandleAddBrowserSource },
     { "AddMediaSource", WSRequestHandler::HandleAddMediaSource },
@@ -118,18 +118,18 @@ QHash<QString, void(*)(WSRequestHandler*)> WSRequestHandler::messageMap {
     { "ClearScene", WSRequestHandler::HandleClearScene },
     { "RefreshSource", WSRequestHandler::HandleRefreshSource },
     { "UpdateOverlay", WSRequestHandler::HandleOverlayUpdate },
-    
+
     // custom audio
     { "PlayAudio", WSRequestHandler::PlayAudio },
     { "StopAudio", WSRequestHandler::StopAudio },
     { "SetProgramVolume", WSRequestHandler::SetProgramVolume },
-    
+
     // custom outputs
     { "SetupStreamingOutput", WSRequestHandler::SetupStreamingOutput },
     { "AddCustomOutput", WSRequestHandler::AddCustomOutput },
     { "StopCustomOutput", WSRequestHandler::StopCustomOutput },
     { "RestartOBS", WSRequestHandler::HandleRestartOBS }
-    
+
 };
 
 QSet<QString> WSRequestHandler::authNotRequired {
@@ -138,7 +138,7 @@ QSet<QString> WSRequestHandler::authNotRequired {
     "Authenticate"
 };
 
-WSRequestHandler::WSRequestHandler(QWebSocket* client) :
+WSRequestHandler::WSRequestHandler(QWebSocket *client) :
     _messageId(0),
     _requestType(""),
     data(nullptr),
@@ -146,9 +146,10 @@ WSRequestHandler::WSRequestHandler(QWebSocket* client) :
 {
 }
 
-void WSRequestHandler::processIncomingMessage(QString textMessage) {
+void WSRequestHandler::processIncomingMessage(QString textMessage)
+{
     QByteArray msgData = textMessage.toUtf8();
-    const char* msg = msgData.constData();
+    const char *msg = msgData.constData();
 
     data = obs_data_create_from_json(msg);
     if (!data) {
@@ -165,8 +166,7 @@ void WSRequestHandler::processIncomingMessage(QString textMessage) {
     }
 
     if (!hasField("request-type")
-        || !hasField("message-id"))
-    {
+            || !hasField("message-id")) {
         SendErrorResponse("missing request parameters");
         return;
     }
@@ -175,14 +175,13 @@ void WSRequestHandler::processIncomingMessage(QString textMessage) {
     _messageId = obs_data_get_string(data, "message-id");
 
     if (Config::Current()->AuthRequired
-        && (_client->property(PROP_AUTHENTICATED).toBool() == false)
-        && (authNotRequired.find(_requestType) == authNotRequired.end()))
-    {
+            && (_client->property(PROP_AUTHENTICATED).toBool() == false)
+            && (authNotRequired.find(_requestType) == authNotRequired.end())) {
         SendErrorResponse("Not Authenticated");
         return;
     }
 
-    void (*handlerFunc)(WSRequestHandler*) = (messageMap[_requestType]);
+    void (*handlerFunc)(WSRequestHandler *) = (messageMap[_requestType]);
 
     if (handlerFunc != nullptr)
         handlerFunc(this);
@@ -190,10 +189,12 @@ void WSRequestHandler::processIncomingMessage(QString textMessage) {
         SendErrorResponse("invalid request type");
 }
 
-WSRequestHandler::~WSRequestHandler() {
+WSRequestHandler::~WSRequestHandler()
+{
 }
 
-void WSRequestHandler::SendOKResponse(obs_data_t* additionalFields) {
+void WSRequestHandler::SendOKResponse(obs_data_t *additionalFields)
+{
     OBSDataAutoRelease response = obs_data_create();
     obs_data_set_string(response, "status", "ok");
     obs_data_set_string(response, "message-id", _messageId);
@@ -204,7 +205,8 @@ void WSRequestHandler::SendOKResponse(obs_data_t* additionalFields) {
     SendResponse(response);
 }
 
-void WSRequestHandler::SendErrorResponse(const char* errorMessage) {
+void WSRequestHandler::SendErrorResponse(const char *errorMessage)
+{
     OBSDataAutoRelease response = obs_data_create();
     obs_data_set_string(response, "status", "error");
     obs_data_set_string(response, "error", errorMessage);
@@ -213,7 +215,8 @@ void WSRequestHandler::SendErrorResponse(const char* errorMessage) {
     SendResponse(response);
 }
 
-void WSRequestHandler::SendErrorResponse(obs_data_t* additionalFields) {
+void WSRequestHandler::SendErrorResponse(obs_data_t *additionalFields)
+{
     OBSDataAutoRelease response = obs_data_create();
     obs_data_set_string(response, "status", "error");
     obs_data_set_string(response, "message-id", _messageId);
@@ -224,7 +227,8 @@ void WSRequestHandler::SendErrorResponse(obs_data_t* additionalFields) {
     SendResponse(response);
 }
 
-void WSRequestHandler::SendResponse(obs_data_t* response)  {
+void WSRequestHandler::SendResponse(obs_data_t *response)
+{
     QString json = obs_data_get_json(response);
     _client->sendTextMessage(json);
 
@@ -232,7 +236,8 @@ void WSRequestHandler::SendResponse(obs_data_t* response)  {
         blog(LOG_DEBUG, "Response << '%s'", json.toUtf8().constData());
 }
 
-bool WSRequestHandler::hasField(QString name) {
+bool WSRequestHandler::hasField(QString name)
+{
     if (!data || name.isEmpty() || name.isNull())
         return false;
 

@@ -5,7 +5,7 @@
 
 /**
  * Set the currently active profile.
- * 
+ *
  * @param {String} `profile-name` Name of the desired profile.
  *
  * @api requests
@@ -13,7 +13,8 @@
  * @category profiles
  * @since 4.0.0
  */
- void WSRequestHandler::HandleSetCurrentProfile(WSRequestHandler* req) {
+void WSRequestHandler::HandleSetCurrentProfile(WSRequestHandler *req)
+{
     if (!req->hasField("profile-name")) {
         req->SendErrorResponse("missing request parameters");
         return;
@@ -29,20 +30,21 @@
     }
 }
 
- /**
- * Get the name of the current profile.
- * 
- * @return {String} `profile-name` Name of the currently active profile.
- *
- * @api requests
- * @name GetCurrentProfile
- * @category profiles
- * @since 4.0.0
- */
-void WSRequestHandler::HandleGetCurrentProfile(WSRequestHandler* req) {
+/**
+* Get the name of the current profile.
+*
+* @return {String} `profile-name` Name of the currently active profile.
+*
+* @api requests
+* @name GetCurrentProfile
+* @category profiles
+* @since 4.0.0
+*/
+void WSRequestHandler::HandleGetCurrentProfile(WSRequestHandler *req)
+{
     OBSDataAutoRelease response = obs_data_create();
     obs_data_set_string(response, "profile-name",
-        obs_frontend_get_current_profile());
+                        obs_frontend_get_current_profile());
 
     req->SendOKResponse(response);
 }
@@ -57,8 +59,9 @@ void WSRequestHandler::HandleGetCurrentProfile(WSRequestHandler* req) {
  * @category profiles
  * @since 4.0.0
  */
-void WSRequestHandler::HandleListProfiles(WSRequestHandler* req) {
-    char** profiles = obs_frontend_get_profiles();
+void WSRequestHandler::HandleListProfiles(WSRequestHandler *req)
+{
+    char **profiles = obs_frontend_get_profiles();
     OBSDataArrayAutoRelease list =
         Utils::StringListToArray(profiles, "profile-name");
     bfree(profiles);

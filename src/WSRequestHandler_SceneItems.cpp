@@ -37,7 +37,8 @@
 * @category scene items
 * @since 4.3.0
 */
-void WSRequestHandler::HandleGetSceneItemProperties(WSRequestHandler* req) {
+void WSRequestHandler::HandleGetSceneItemProperties(WSRequestHandler *req)
+{
     if (!req->hasField("item")) {
         req->SendErrorResponse("missing request parameters");
         return;
@@ -100,33 +101,32 @@ void WSRequestHandler::HandleGetSceneItemProperties(WSRequestHandler* req) {
     obs_bounds_type boundsType = obs_sceneitem_get_bounds_type(sceneItem);
     if (boundsType == OBS_BOUNDS_NONE) {
         obs_data_set_string(boundsData, "type", "OBS_BOUNDS_NONE");
-    }
-    else {
+    } else {
         switch (boundsType) {
-            case OBS_BOUNDS_STRETCH: {
-                obs_data_set_string(boundsData, "type", "OBS_BOUNDS_STRETCH");
-                break;
-            }
-            case OBS_BOUNDS_SCALE_INNER: {
-                obs_data_set_string(boundsData, "type", "OBS_BOUNDS_SCALE_INNER");
-                break;
-            }
-            case OBS_BOUNDS_SCALE_OUTER: {
-                obs_data_set_string(boundsData, "type", "OBS_BOUNDS_SCALE_OUTER");
-                break;
-            }
-            case OBS_BOUNDS_SCALE_TO_WIDTH: {
-                obs_data_set_string(boundsData, "type", "OBS_BOUNDS_SCALE_TO_WIDTH");
-                break;
-            }
-            case OBS_BOUNDS_SCALE_TO_HEIGHT: {
-                obs_data_set_string(boundsData, "type", "OBS_BOUNDS_SCALE_TO_HEIGHT");
-                break;
-            }
-            case OBS_BOUNDS_MAX_ONLY: {
-                obs_data_set_string(boundsData, "type", "OBS_BOUNDS_MAX_ONLY");
-                break;
-            }
+        case OBS_BOUNDS_STRETCH: {
+            obs_data_set_string(boundsData, "type", "OBS_BOUNDS_STRETCH");
+            break;
+        }
+        case OBS_BOUNDS_SCALE_INNER: {
+            obs_data_set_string(boundsData, "type", "OBS_BOUNDS_SCALE_INNER");
+            break;
+        }
+        case OBS_BOUNDS_SCALE_OUTER: {
+            obs_data_set_string(boundsData, "type", "OBS_BOUNDS_SCALE_OUTER");
+            break;
+        }
+        case OBS_BOUNDS_SCALE_TO_WIDTH: {
+            obs_data_set_string(boundsData, "type", "OBS_BOUNDS_SCALE_TO_WIDTH");
+            break;
+        }
+        case OBS_BOUNDS_SCALE_TO_HEIGHT: {
+            obs_data_set_string(boundsData, "type", "OBS_BOUNDS_SCALE_TO_HEIGHT");
+            break;
+        }
+        case OBS_BOUNDS_MAX_ONLY: {
+            obs_data_set_string(boundsData, "type", "OBS_BOUNDS_MAX_ONLY");
+            break;
+        }
         }
         obs_data_set_int(boundsData, "alignment", obs_sceneitem_get_bounds_alignment(sceneItem));
         vec2 bounds;
@@ -168,179 +168,156 @@ void WSRequestHandler::HandleGetSceneItemProperties(WSRequestHandler* req) {
 * @category scene items
 * @since 4.3.0
 */
-void WSRequestHandler::HandleSetSceneItemProperties(WSRequestHandler* req) {
-	if (!req->hasField("item")) {
-		req->SendErrorResponse("missing request parameters");
-		return;
-	}
+void WSRequestHandler::HandleSetSceneItemProperties(WSRequestHandler *req)
+{
+    if (!req->hasField("item")) {
+        req->SendErrorResponse("missing request parameters");
+        return;
+    }
 
-	OBSDataAutoRelease reqItem = obs_data_get_obj(req->data, "item");
-	if (!reqItem) {
-		req->SendErrorResponse("invalid request parameters");
-		return;
-	}
+    OBSDataAutoRelease reqItem = obs_data_get_obj(req->data, "item");
+    if (!reqItem) {
+        req->SendErrorResponse("invalid request parameters");
+        return;
+    }
 
-	QString sceneName = obs_data_get_string(req->data, "scene");
-	OBSSourceAutoRelease scene = Utils::GetSceneFromNameOrCurrent(sceneName);
-	if (!scene) {
-		req->SendErrorResponse("requested scene doesn't exist");
-		return;
-	}
+    QString sceneName = obs_data_get_string(req->data, "scene");
+    OBSSourceAutoRelease scene = Utils::GetSceneFromNameOrCurrent(sceneName);
+    if (!scene) {
+        req->SendErrorResponse("requested scene doesn't exist");
+        return;
+    }
 
-	OBSSceneItemAutoRelease sceneItem = Utils::GetSceneItemFromItem(scene, reqItem);
-	if (!sceneItem) {
-		req->SendErrorResponse("specified scene item doesn't exist");
-		return;
-	}
+    OBSSceneItemAutoRelease sceneItem = Utils::GetSceneItemFromItem(scene, reqItem);
+    if (!sceneItem) {
+        req->SendErrorResponse("specified scene item doesn't exist");
+        return;
+    }
 
-	bool badRequest = false;
-	OBSDataAutoRelease errorMessage = obs_data_create();
+    bool badRequest = false;
+    OBSDataAutoRelease errorMessage = obs_data_create();
 
-	if (obs_data_has_user_value(reqItem, "position")) {
-		vec2 oldPosition;
-		OBSDataAutoRelease positionError = obs_data_create();
-		obs_sceneitem_get_pos(sceneItem, &oldPosition);
-		OBSDataAutoRelease reqPosition = obs_data_get_obj(reqItem, "position");
-		vec2 newPosition = oldPosition;
-		if (obs_data_has_user_value(reqPosition, "x")) {
-			newPosition.x = obs_data_get_int(reqPosition, "x");
-		}
-		if (obs_data_has_user_value(reqPosition, "y")) {
-			newPosition.y = obs_data_get_int(reqPosition, "y");
-		}
-		if (obs_data_has_user_value(reqPosition, "alignment")) {
-			const uint32_t alignment = obs_data_get_int(reqPosition, "alignment");
-			if (Utils::IsValidAlignment(alignment)) {
-				obs_sceneitem_set_alignment(sceneItem, alignment);
-			}
-			else {
-				badRequest = true;
-				obs_data_set_string(positionError, "alignment", "invalid");
-				obs_data_set_obj(errorMessage, "position", positionError);
-			}
-		}
-		obs_sceneitem_set_pos(sceneItem, &newPosition);
-	}
-
-  if (obs_data_has_user_value(reqItem, "rotation")) {
-		obs_sceneitem_set_rot(sceneItem, (float)obs_data_get_double(reqItem, "rotation"));
-	}
-
-  if (obs_data_has_user_value(reqItem, "scale")) {
-		vec2 oldScale;
-		obs_sceneitem_get_scale(sceneItem, &oldScale);
-		OBSDataAutoRelease reqScale = obs_data_get_obj(reqItem, "scale");
-		vec2 newScale = oldScale;
-		if (obs_data_has_user_value(reqScale, "x")) {
-			newScale.x = obs_data_get_double(reqScale, "x");
-		}
-		if (obs_data_has_user_value(reqScale, "y")) {
-			newScale.y = obs_data_get_double(reqScale, "y");
-		}
-		obs_sceneitem_set_scale(sceneItem, &newScale);
-	}
-
-  if (obs_data_has_user_value(reqItem, "crop")) {
-		obs_sceneitem_crop oldCrop;
-		obs_sceneitem_get_crop(sceneItem, &oldCrop);
-		OBSDataAutoRelease reqCrop = obs_data_get_obj(reqItem, "crop");
-		obs_sceneitem_crop newCrop = oldCrop;
-		if (obs_data_has_user_value(reqCrop, "top")) {
-			newCrop.top = obs_data_get_int(reqCrop, "top");
-		}
-		if (obs_data_has_user_value(reqCrop, "right")) {
-			newCrop.right = obs_data_get_int(reqCrop, "right");
-		}
-		if (obs_data_has_user_value(reqCrop, "bottom")) {
-			newCrop.bottom = obs_data_get_int(reqCrop, "bottom");
-		}
-		if (obs_data_has_user_value(reqCrop, "left")) {
-			newCrop.left = obs_data_get_int(reqCrop, "left");
-		}
-		obs_sceneitem_set_crop(sceneItem, &newCrop);
-	}
-
-    if (obs_data_has_user_value(reqItem, "visible")) {
-        obs_source_t* source = obs_sceneitem_get_source(sceneItem);
-        bool visible = obs_data_get_bool(reqItem, "visible");
-        if(!visible) {
-            blog(LOG_INFO, "visibility changed to 0, muting source");
-            obs_source_set_volume(source, 0);
-        } else {
-            obs_source_set_volume(source, 1);
-            obs_data_t* outputOpts = Audio::GetAudioOutputOpts(sceneName);
-            Audio::TurnOnSourceAudioMonitor(source, outputOpts);
+    if (obs_data_has_user_value(reqItem, "position")) {
+        vec2 oldPosition;
+        OBSDataAutoRelease positionError = obs_data_create();
+        obs_sceneitem_get_pos(sceneItem, &oldPosition);
+        OBSDataAutoRelease reqPosition = obs_data_get_obj(reqItem, "position");
+        vec2 newPosition = oldPosition;
+        if (obs_data_has_user_value(reqPosition, "x")) {
+            newPosition.x = obs_data_get_int(reqPosition, "x");
         }
-        obs_sceneitem_set_visible(sceneItem, visible);
-    } 
+        if (obs_data_has_user_value(reqPosition, "y")) {
+            newPosition.y = obs_data_get_int(reqPosition, "y");
+        }
+        if (obs_data_has_user_value(reqPosition, "alignment")) {
+            const uint32_t alignment = obs_data_get_int(reqPosition, "alignment");
+            if (Utils::IsValidAlignment(alignment)) {
+                obs_sceneitem_set_alignment(sceneItem, alignment);
+            } else {
+                badRequest = true;
+                obs_data_set_string(positionError, "alignment", "invalid");
+                obs_data_set_obj(errorMessage, "position", positionError);
+            }
+        }
+        obs_sceneitem_set_pos(sceneItem, &newPosition);
+    }
 
-  if (obs_data_has_user_value(reqItem, "locked")) {
-    obs_sceneitem_set_locked(sceneItem, obs_data_get_bool(reqItem, "locked"));
-  }
+    if (obs_data_has_user_value(reqItem, "rotation")) {
+        obs_sceneitem_set_rot(sceneItem, (float)obs_data_get_double(reqItem, "rotation"));
+    }
 
-  if (obs_data_has_user_value(reqItem, "bounds")) {
-		bool badBounds = false;
-		OBSDataAutoRelease boundsError = obs_data_create();
-		OBSDataAutoRelease reqBounds = obs_data_get_obj(reqItem, "bounds");
-		if (obs_data_has_user_value(reqBounds, "type")) {
-			const QString newBoundsType = obs_data_get_string(reqBounds, "type");
-			if (newBoundsType == "OBS_BOUNDS_NONE") {
-				obs_sceneitem_set_bounds_type(sceneItem, OBS_BOUNDS_NONE);
-			}
-			else if (newBoundsType == "OBS_BOUNDS_STRETCH") {
-				obs_sceneitem_set_bounds_type(sceneItem, OBS_BOUNDS_STRETCH);
-			}
-			else if (newBoundsType == "OBS_BOUNDS_SCALE_INNER") {
-				obs_sceneitem_set_bounds_type(sceneItem, OBS_BOUNDS_SCALE_INNER);
-			}
-			else if (newBoundsType == "OBS_BOUNDS_SCALE_OUTER") {
-				obs_sceneitem_set_bounds_type(sceneItem, OBS_BOUNDS_SCALE_OUTER);
-			}
-			else if (newBoundsType == "OBS_BOUNDS_SCALE_TO_WIDTH") {
-				obs_sceneitem_set_bounds_type(sceneItem, OBS_BOUNDS_SCALE_TO_WIDTH);
-			}
-			else if (newBoundsType == "OBS_BOUNDS_SCALE_TO_HEIGHT") {
-				obs_sceneitem_set_bounds_type(sceneItem, OBS_BOUNDS_SCALE_TO_HEIGHT);
-			}
-			else if (newBoundsType == "OBS_BOUNDS_MAX_ONLY") {
-				obs_sceneitem_set_bounds_type(sceneItem, OBS_BOUNDS_MAX_ONLY);
-			}
-			else {
-				badRequest = badBounds = true;
-				obs_data_set_string(boundsError, "type", "invalid");
-			}
-		}
-		vec2 oldBounds;
-		obs_sceneitem_get_bounds(sceneItem, &oldBounds);
-		vec2 newBounds = oldBounds;
-		if (obs_data_has_user_value(reqBounds, "x")) {
-			newBounds.x = obs_data_get_double(reqBounds, "x");
-		}
-		if (obs_data_has_user_value(reqBounds, "y")) {
-			newBounds.y = obs_data_get_double(reqBounds, "y");
-		}
-		obs_sceneitem_set_bounds(sceneItem, &newBounds);
-		if (obs_data_has_user_value(reqBounds, "alignment")) {
-			const uint32_t bounds_alignment = obs_data_get_int(reqBounds, "alignment");
-			if (Utils::IsValidAlignment(bounds_alignment)) {
-				obs_sceneitem_set_bounds_alignment(sceneItem, bounds_alignment);
-			}
-			else {
-				badRequest = badBounds = true;
-				obs_data_set_string(boundsError, "alignment", "invalid");
-			}
-		}
-		if (badBounds) {
-			obs_data_set_obj(errorMessage, "bounds", boundsError);
-		}
-	}
+    if (obs_data_has_user_value(reqItem, "scale")) {
+        vec2 oldScale;
+        obs_sceneitem_get_scale(sceneItem, &oldScale);
+        OBSDataAutoRelease reqScale = obs_data_get_obj(reqItem, "scale");
+        vec2 newScale = oldScale;
+        if (obs_data_has_user_value(reqScale, "x")) {
+            newScale.x = obs_data_get_double(reqScale, "x");
+        }
+        if (obs_data_has_user_value(reqScale, "y")) {
+            newScale.y = obs_data_get_double(reqScale, "y");
+        }
+        obs_sceneitem_set_scale(sceneItem, &newScale);
+    }
 
-	if (badRequest) {
-		req->SendErrorResponse(errorMessage);
-	}
-	else {
-		req->SendOKResponse();
-	}
+    if (obs_data_has_user_value(reqItem, "crop")) {
+        obs_sceneitem_crop oldCrop;
+        obs_sceneitem_get_crop(sceneItem, &oldCrop);
+        OBSDataAutoRelease reqCrop = obs_data_get_obj(reqItem, "crop");
+        obs_sceneitem_crop newCrop = oldCrop;
+        if (obs_data_has_user_value(reqCrop, "top")) {
+            newCrop.top = obs_data_get_int(reqCrop, "top");
+        }
+        if (obs_data_has_user_value(reqCrop, "right")) {
+            newCrop.right = obs_data_get_int(reqCrop, "right");
+        }
+        if (obs_data_has_user_value(reqCrop, "bottom")) {
+            newCrop.bottom = obs_data_get_int(reqCrop, "bottom");
+        }
+        if (obs_data_has_user_value(reqCrop, "left")) {
+            newCrop.left = obs_data_get_int(reqCrop, "left");
+        }
+        obs_sceneitem_set_crop(sceneItem, &newCrop);
+    }
+
+    if (obs_data_has_user_value(reqItem, "locked")) {
+        obs_sceneitem_set_locked(sceneItem, obs_data_get_bool(reqItem, "locked"));
+    }
+
+    if (obs_data_has_user_value(reqItem, "bounds")) {
+        bool badBounds = false;
+        OBSDataAutoRelease boundsError = obs_data_create();
+        OBSDataAutoRelease reqBounds = obs_data_get_obj(reqItem, "bounds");
+        if (obs_data_has_user_value(reqBounds, "type")) {
+            const QString newBoundsType = obs_data_get_string(reqBounds, "type");
+            if (newBoundsType == "OBS_BOUNDS_NONE") {
+                obs_sceneitem_set_bounds_type(sceneItem, OBS_BOUNDS_NONE);
+            } else if (newBoundsType == "OBS_BOUNDS_STRETCH") {
+                obs_sceneitem_set_bounds_type(sceneItem, OBS_BOUNDS_STRETCH);
+            } else if (newBoundsType == "OBS_BOUNDS_SCALE_INNER") {
+                obs_sceneitem_set_bounds_type(sceneItem, OBS_BOUNDS_SCALE_INNER);
+            } else if (newBoundsType == "OBS_BOUNDS_SCALE_OUTER") {
+                obs_sceneitem_set_bounds_type(sceneItem, OBS_BOUNDS_SCALE_OUTER);
+            } else if (newBoundsType == "OBS_BOUNDS_SCALE_TO_WIDTH") {
+                obs_sceneitem_set_bounds_type(sceneItem, OBS_BOUNDS_SCALE_TO_WIDTH);
+            } else if (newBoundsType == "OBS_BOUNDS_SCALE_TO_HEIGHT") {
+                obs_sceneitem_set_bounds_type(sceneItem, OBS_BOUNDS_SCALE_TO_HEIGHT);
+            } else if (newBoundsType == "OBS_BOUNDS_MAX_ONLY") {
+                obs_sceneitem_set_bounds_type(sceneItem, OBS_BOUNDS_MAX_ONLY);
+            } else {
+                badRequest = badBounds = true;
+                obs_data_set_string(boundsError, "type", "invalid");
+            }
+        }
+        vec2 oldBounds;
+        obs_sceneitem_get_bounds(sceneItem, &oldBounds);
+        vec2 newBounds = oldBounds;
+        if (obs_data_has_user_value(reqBounds, "x")) {
+            newBounds.x = obs_data_get_double(reqBounds, "x");
+        }
+        if (obs_data_has_user_value(reqBounds, "y")) {
+            newBounds.y = obs_data_get_double(reqBounds, "y");
+        }
+        obs_sceneitem_set_bounds(sceneItem, &newBounds);
+        if (obs_data_has_user_value(reqBounds, "alignment")) {
+            const uint32_t bounds_alignment = obs_data_get_int(reqBounds, "alignment");
+            if (Utils::IsValidAlignment(bounds_alignment)) {
+                obs_sceneitem_set_bounds_alignment(sceneItem, bounds_alignment);
+            } else {
+                badRequest = badBounds = true;
+                obs_data_set_string(boundsError, "alignment", "invalid");
+            }
+        }
+        if (badBounds) {
+            obs_data_set_obj(errorMessage, "bounds", boundsError);
+        }
+    }
+
+    if (badRequest) {
+        req->SendErrorResponse(errorMessage);
+    } else {
+        req->SendOKResponse();
+    }
 }
 
 /**
@@ -354,39 +331,39 @@ void WSRequestHandler::HandleSetSceneItemProperties(WSRequestHandler* req) {
 * @category scene items
 * @since 4.2.0
 */
-void WSRequestHandler::HandleResetSceneItem(WSRequestHandler* req) {
-	// TODO: remove this request, or refactor it to ResetSource
+void WSRequestHandler::HandleResetSceneItem(WSRequestHandler *req)
+{
+    // TODO: remove this request, or refactor it to ResetSource
 
-	if (!req->hasField("item")) {
-		req->SendErrorResponse("missing request parameters");
-		return;
-	}
+    if (!req->hasField("item")) {
+        req->SendErrorResponse("missing request parameters");
+        return;
+    }
 
-	const char* itemName = obs_data_get_string(req->data, "item");
-	if (!itemName) {
-		req->SendErrorResponse("invalid request parameters");
-		return;
-	}
+    const char *itemName = obs_data_get_string(req->data, "item");
+    if (!itemName) {
+        req->SendErrorResponse("invalid request parameters");
+        return;
+    }
 
-	const char* sceneName = obs_data_get_string(req->data, "scene-name");
-	OBSSourceAutoRelease scene = Utils::GetSceneFromNameOrCurrent(sceneName);
-	if (!scene) {
-		req->SendErrorResponse("requested scene doesn't exist");
-		return;
-	}
+    const char *sceneName = obs_data_get_string(req->data, "scene-name");
+    OBSSourceAutoRelease scene = Utils::GetSceneFromNameOrCurrent(sceneName);
+    if (!scene) {
+        req->SendErrorResponse("requested scene doesn't exist");
+        return;
+    }
 
-	OBSSceneItemAutoRelease sceneItem = Utils::GetSceneItemFromName(scene, itemName);
-	if (sceneItem) {
-		OBSSource sceneItemSource = obs_sceneitem_get_source(sceneItem);
+    OBSSceneItemAutoRelease sceneItem = Utils::GetSceneItemFromName(scene, itemName);
+    if (sceneItem) {
+        OBSSource sceneItemSource = obs_sceneitem_get_source(sceneItem);
 
-		OBSDataAutoRelease settings = obs_source_get_settings(sceneItemSource);
-		obs_source_update(sceneItemSource, settings);
+        OBSDataAutoRelease settings = obs_source_get_settings(sceneItemSource);
+        obs_source_update(sceneItemSource, settings);
 
-		req->SendOKResponse();
-	}
-	else {
-		req->SendErrorResponse("specified scene item doesn't exist");
-	}
+        req->SendOKResponse();
+    } else {
+        req->SendErrorResponse("specified scene item doesn't exist");
+    }
 }
 
 /**
@@ -402,38 +379,37 @@ void WSRequestHandler::HandleResetSceneItem(WSRequestHandler* req) {
 * @since 0.3
 * @deprecated Since 4.3.0. Prefer the use of SetSceneItemProperties.
 */
-void WSRequestHandler::HandleSetSceneItemRender(WSRequestHandler* req) {
-	if (!req->hasField("source") ||
-		!req->hasField("render"))
-	{
-		req->SendErrorResponse("missing request parameters");
-		return;
-	}
+void WSRequestHandler::HandleSetSceneItemRender(WSRequestHandler *req)
+{
+    if (!req->hasField("source") ||
+            !req->hasField("render")) {
+        req->SendErrorResponse("missing request parameters");
+        return;
+    }
 
-	const char* itemName = obs_data_get_string(req->data, "source");
-	bool isVisible = obs_data_get_bool(req->data, "render");
+    const char *itemName = obs_data_get_string(req->data, "source");
+    bool isVisible = obs_data_get_bool(req->data, "render");
 
-	if (!itemName) {
-		req->SendErrorResponse("invalid request parameters");
-		return;
-	}
+    if (!itemName) {
+        req->SendErrorResponse("invalid request parameters");
+        return;
+    }
 
-	const char* sceneName = obs_data_get_string(req->data, "scene-name");
-	OBSSourceAutoRelease scene = Utils::GetSceneFromNameOrCurrent(sceneName);
-	if (!scene) {
-		req->SendErrorResponse("requested scene doesn't exist");
-		return;
-	}
+    const char *sceneName = obs_data_get_string(req->data, "scene-name");
+    OBSSourceAutoRelease scene = Utils::GetSceneFromNameOrCurrent(sceneName);
+    if (!scene) {
+        req->SendErrorResponse("requested scene doesn't exist");
+        return;
+    }
 
-	OBSSceneItemAutoRelease sceneItem =
-		Utils::GetSceneItemFromName(scene, itemName);
-	if (sceneItem) {
-		obs_sceneitem_set_visible(sceneItem, isVisible);
-		req->SendOKResponse();
-	}
-	else {
-		req->SendErrorResponse("specified scene item doesn't exist");
-	}
+    OBSSceneItemAutoRelease sceneItem =
+        Utils::GetSceneItemFromName(scene, itemName);
+    if (sceneItem) {
+        obs_sceneitem_set_visible(sceneItem, isVisible);
+        req->SendOKResponse();
+    } else {
+        req->SendErrorResponse("specified scene item doesn't exist");
+    }
 }
 
 /**
@@ -451,38 +427,38 @@ void WSRequestHandler::HandleSetSceneItemRender(WSRequestHandler* req) {
 * @since 4.0.0
 * @deprecated Since 4.3.0. Prefer the use of SetSceneItemProperties.
 */
-void WSRequestHandler::HandleSetSceneItemPosition(WSRequestHandler* req) {
-	if (!req->hasField("item") ||
-		!req->hasField("x") || !req->hasField("y")) {
-		req->SendErrorResponse("missing request parameters");
-		return;
-	}
+void WSRequestHandler::HandleSetSceneItemPosition(WSRequestHandler *req)
+{
+    if (!req->hasField("item") ||
+            !req->hasField("x") || !req->hasField("y")) {
+        req->SendErrorResponse("missing request parameters");
+        return;
+    }
 
-	QString itemName = obs_data_get_string(req->data, "item");
-	if (itemName.isEmpty()) {
-		req->SendErrorResponse("invalid request parameters");
-		return;
-	}
+    QString itemName = obs_data_get_string(req->data, "item");
+    if (itemName.isEmpty()) {
+        req->SendErrorResponse("invalid request parameters");
+        return;
+    }
 
-	QString sceneName = obs_data_get_string(req->data, "scene-name");
-	OBSSourceAutoRelease scene = Utils::GetSceneFromNameOrCurrent(sceneName);
-	if (!scene) {
-		req->SendErrorResponse("requested scene could not be found");
-		return;
-	}
+    QString sceneName = obs_data_get_string(req->data, "scene-name");
+    OBSSourceAutoRelease scene = Utils::GetSceneFromNameOrCurrent(sceneName);
+    if (!scene) {
+        req->SendErrorResponse("requested scene could not be found");
+        return;
+    }
 
-	OBSSceneItem sceneItem = Utils::GetSceneItemFromName(scene, itemName);
-	if (sceneItem) {
-		vec2 item_position = { 0 };
-		item_position.x = obs_data_get_double(req->data, "x");
-		item_position.y = obs_data_get_double(req->data, "y");
-		obs_sceneitem_set_pos(sceneItem, &item_position);
+    OBSSceneItem sceneItem = Utils::GetSceneItemFromName(scene, itemName);
+    if (sceneItem) {
+        vec2 item_position = { 0 };
+        item_position.x = obs_data_get_double(req->data, "x");
+        item_position.y = obs_data_get_double(req->data, "y");
+        obs_sceneitem_set_pos(sceneItem, &item_position);
 
-		req->SendOKResponse();
-	}
-	else {
-		req->SendErrorResponse("specified scene item doesn't exist");
-	}
+        req->SendOKResponse();
+    } else {
+        req->SendErrorResponse("specified scene item doesn't exist");
+    }
 }
 
 /**
@@ -500,43 +476,42 @@ void WSRequestHandler::HandleSetSceneItemPosition(WSRequestHandler* req) {
 * @since 4.0.0
 * @deprecated Since 4.3.0. Prefer the use of SetSceneItemProperties.
 */
-void WSRequestHandler::HandleSetSceneItemTransform(WSRequestHandler* req) {
-	if (!req->hasField("item") ||
-		!req->hasField("x-scale") ||
-		!req->hasField("y-scale") ||
-		!req->hasField("rotation"))
-	{
-		req->SendErrorResponse("missing request parameters");
-		return;
-	}
+void WSRequestHandler::HandleSetSceneItemTransform(WSRequestHandler *req)
+{
+    if (!req->hasField("item") ||
+            !req->hasField("x-scale") ||
+            !req->hasField("y-scale") ||
+            !req->hasField("rotation")) {
+        req->SendErrorResponse("missing request parameters");
+        return;
+    }
 
-	QString itemName = obs_data_get_string(req->data, "item");
-	if (itemName.isEmpty()) {
-		req->SendErrorResponse("invalid request parameters");
-		return;
-	}
+    QString itemName = obs_data_get_string(req->data, "item");
+    if (itemName.isEmpty()) {
+        req->SendErrorResponse("invalid request parameters");
+        return;
+    }
 
-	QString sceneName = obs_data_get_string(req->data, "scene-name");
-	OBSSourceAutoRelease scene = Utils::GetSceneFromNameOrCurrent(sceneName);
-	if (!scene) {
-		req->SendErrorResponse("requested scene doesn't exist");
-		return;
-	}
+    QString sceneName = obs_data_get_string(req->data, "scene-name");
+    OBSSourceAutoRelease scene = Utils::GetSceneFromNameOrCurrent(sceneName);
+    if (!scene) {
+        req->SendErrorResponse("requested scene doesn't exist");
+        return;
+    }
 
-	vec2 scale;
-	scale.x = obs_data_get_double(req->data, "x-scale");
-	scale.y = obs_data_get_double(req->data, "y-scale");
-	float rotation = obs_data_get_double(req->data, "rotation");
+    vec2 scale;
+    scale.x = obs_data_get_double(req->data, "x-scale");
+    scale.y = obs_data_get_double(req->data, "y-scale");
+    float rotation = obs_data_get_double(req->data, "rotation");
 
-	OBSSceneItemAutoRelease sceneItem = Utils::GetSceneItemFromName(scene, itemName);
-	if (sceneItem) {
-		obs_sceneitem_set_scale(sceneItem, &scale);
-		obs_sceneitem_set_rot(sceneItem, rotation);
-		req->SendOKResponse();
-	}
-	else {
-		req->SendErrorResponse("specified scene item doesn't exist");
-	}
+    OBSSceneItemAutoRelease sceneItem = Utils::GetSceneItemFromName(scene, itemName);
+    if (sceneItem) {
+        obs_sceneitem_set_scale(sceneItem, &scale);
+        obs_sceneitem_set_rot(sceneItem, rotation);
+        req->SendOKResponse();
+    } else {
+        req->SendErrorResponse("specified scene item doesn't exist");
+    }
 }
 
 /**
@@ -555,38 +530,38 @@ void WSRequestHandler::HandleSetSceneItemTransform(WSRequestHandler* req) {
 * @since 4.1.0
 * @deprecated Since 4.3.0. Prefer the use of SetSceneItemProperties.
 */
-void WSRequestHandler::HandleSetSceneItemCrop(WSRequestHandler* req) {
-	if (!req->hasField("item")) {
-		req->SendErrorResponse("missing request parameters");
-		return;
-	}
+void WSRequestHandler::HandleSetSceneItemCrop(WSRequestHandler *req)
+{
+    if (!req->hasField("item")) {
+        req->SendErrorResponse("missing request parameters");
+        return;
+    }
 
-	QString itemName = obs_data_get_string(req->data, "item");
-	if (itemName.isEmpty()) {
-		req->SendErrorResponse("invalid request parameters");
-		return;
-	}
+    QString itemName = obs_data_get_string(req->data, "item");
+    if (itemName.isEmpty()) {
+        req->SendErrorResponse("invalid request parameters");
+        return;
+    }
 
-	QString sceneName = obs_data_get_string(req->data, "scene-name");
-	OBSSourceAutoRelease scene = Utils::GetSceneFromNameOrCurrent(sceneName);
-	if (!scene) {
-		req->SendErrorResponse("requested scene doesn't exist");
-		return;
-	}
+    QString sceneName = obs_data_get_string(req->data, "scene-name");
+    OBSSourceAutoRelease scene = Utils::GetSceneFromNameOrCurrent(sceneName);
+    if (!scene) {
+        req->SendErrorResponse("requested scene doesn't exist");
+        return;
+    }
 
-	OBSSceneItemAutoRelease sceneItem = Utils::GetSceneItemFromName(scene, itemName);
-	if (sceneItem) {
-		struct obs_sceneitem_crop crop = { 0 };
-		crop.top = obs_data_get_int(req->data, "top");
-		crop.bottom = obs_data_get_int(req->data, "bottom");
-		crop.left = obs_data_get_int(req->data, "left");
-		crop.right = obs_data_get_int(req->data, "right");
+    OBSSceneItemAutoRelease sceneItem = Utils::GetSceneItemFromName(scene, itemName);
+    if (sceneItem) {
+        struct obs_sceneitem_crop crop = { 0 };
+        crop.top = obs_data_get_int(req->data, "top");
+        crop.bottom = obs_data_get_int(req->data, "bottom");
+        crop.left = obs_data_get_int(req->data, "left");
+        crop.right = obs_data_get_int(req->data, "right");
 
-		obs_sceneitem_set_crop(sceneItem, &crop);
+        obs_sceneitem_set_crop(sceneItem, &crop);
 
-		req->SendOKResponse();
-	}
-	else {
-		req->SendErrorResponse("specified scene item doesn't exist");
-	}
+        req->SendOKResponse();
+    } else {
+        req->SendErrorResponse("specified scene item doesn't exist");
+    }
 }

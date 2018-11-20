@@ -19,7 +19,8 @@
  * @category general
  * @since 0.3
  */
- void WSRequestHandler::HandleGetVersion(WSRequestHandler* req) {
+void WSRequestHandler::HandleGetVersion(WSRequestHandler *req)
+{
     QString obsVersion = Utils::OBSVersionString();
 
     QList<QString> names = req->messageMap.keys();
@@ -53,7 +54,8 @@
  * @category general
  * @since 0.3
  */
-void WSRequestHandler::HandleGetAuthRequired(WSRequestHandler* req) {
+void WSRequestHandler::HandleGetAuthRequired(WSRequestHandler *req)
+{
     bool authRequired = Config::Current()->AuthRequired;
 
     OBSDataAutoRelease data = obs_data_create();
@@ -61,9 +63,9 @@ void WSRequestHandler::HandleGetAuthRequired(WSRequestHandler* req) {
 
     if (authRequired) {
         obs_data_set_string(data, "challenge",
-            Config::Current()->SessionChallenge.toUtf8());
+                            Config::Current()->SessionChallenge.toUtf8());
         obs_data_set_string(data, "salt",
-            Config::Current()->Salt.toUtf8());
+                            Config::Current()->Salt.toUtf8());
     }
 
     req->SendOKResponse(data);
@@ -79,7 +81,8 @@ void WSRequestHandler::HandleGetAuthRequired(WSRequestHandler* req) {
  * @category general
  * @since 0.3
  */
-void WSRequestHandler::HandleAuthenticate(WSRequestHandler* req) {
+void WSRequestHandler::HandleAuthenticate(WSRequestHandler *req)
+{
     if (!req->hasField("auth")) {
         req->SendErrorResponse("missing request parameters");
         return;
@@ -92,8 +95,7 @@ void WSRequestHandler::HandleAuthenticate(WSRequestHandler* req) {
     }
 
     if ((req->_client->property(PROP_AUTHENTICATED).toBool() == false)
-        && Config::Current()->CheckAuth(auth))
-    {
+            && Config::Current()->CheckAuth(auth)) {
         req->_client->setProperty(PROP_AUTHENTICATED, true);
         req->SendOKResponse();
     } else {
@@ -111,7 +113,8 @@ void WSRequestHandler::HandleAuthenticate(WSRequestHandler* req) {
  * @category general
  * @since 4.3.0
  */
- void WSRequestHandler::HandleSetHeartbeat(WSRequestHandler* req) {
+void WSRequestHandler::HandleSetHeartbeat(WSRequestHandler *req)
+{
     if (!req->hasField("enable")) {
         req->SendErrorResponse("Heartbeat <enable> parameter missing");
         return;
@@ -122,7 +125,7 @@ void WSRequestHandler::HandleAuthenticate(WSRequestHandler* req) {
 
     OBSDataAutoRelease response = obs_data_create();
     obs_data_set_bool(response, "enable",
-        WSEvents::Instance->HeartbeatIsActive);
+                      WSEvents::Instance->HeartbeatIsActive);
     req->SendOKResponse(response);
 }
 
@@ -136,7 +139,8 @@ void WSRequestHandler::HandleAuthenticate(WSRequestHandler* req) {
  * @category general
  * @since 4.3.0
  */
-void WSRequestHandler::HandleSetFilenameFormatting(WSRequestHandler* req) {
+void WSRequestHandler::HandleSetFilenameFormatting(WSRequestHandler *req)
+{
     if (!req->hasField("filename-formatting")) {
         req->SendErrorResponse("<filename-formatting> parameter missing");
         return;
@@ -161,7 +165,8 @@ void WSRequestHandler::HandleSetFilenameFormatting(WSRequestHandler* req) {
  * @category general
  * @since 4.3.0
  */
-void WSRequestHandler::HandleGetFilenameFormatting(WSRequestHandler* req) {
+void WSRequestHandler::HandleGetFilenameFormatting(WSRequestHandler *req)
+{
     OBSDataAutoRelease response = obs_data_create();
     obs_data_set_string(response, "filename-formatting", Utils::GetFilenameFormatting());
     req->SendOKResponse(response);

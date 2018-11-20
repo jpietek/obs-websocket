@@ -6,37 +6,38 @@
 
 #define STREAM_SERVICE_ID "websocket_custom_service"
 
- /**
- * Get current streaming and recording status.
- * 
- * @return {boolean} `streaming` Current streaming status.
- * @return {boolean} `recording` Current recording status.
- * @return {String (optional)} `stream-timecode` Time elapsed since streaming started (only present if currently streaming).
- * @return {String (optional)} `rec-timecode` Time elapsed since recording started (only present if currently recording).
- * @return {boolean} `preview-only` Always false. Retrocompatibility with OBSRemote.
- *
- * @api requests
- * @name GetStreamingStatus
- * @category streaming
- * @since 0.3
- */
- void WSRequestHandler::HandleGetStreamingStatus(WSRequestHandler* req) {
+/**
+* Get current streaming and recording status.
+*
+* @return {boolean} `streaming` Current streaming status.
+* @return {boolean} `recording` Current recording status.
+* @return {String (optional)} `stream-timecode` Time elapsed since streaming started (only present if currently streaming).
+* @return {String (optional)} `rec-timecode` Time elapsed since recording started (only present if currently recording).
+* @return {boolean} `preview-only` Always false. Retrocompatibility with OBSRemote.
+*
+* @api requests
+* @name GetStreamingStatus
+* @category streaming
+* @since 0.3
+*/
+void WSRequestHandler::HandleGetStreamingStatus(WSRequestHandler *req)
+{
     OBSDataAutoRelease data = obs_data_create();
     obs_data_set_bool(data, "streaming", obs_frontend_streaming_active());
     obs_data_set_bool(data, "recording", obs_frontend_recording_active());
     obs_data_set_bool(data, "preview-only", false);
 
-    const char* tc = nullptr;
+    const char *tc = nullptr;
     if (obs_frontend_streaming_active()) {
         tc = WSEvents::Instance->GetStreamingTimecode();
         obs_data_set_string(data, "stream-timecode", tc);
-        bfree((void*)tc);
+        bfree((void *)tc);
     }
 
     if (obs_frontend_recording_active()) {
         tc = WSEvents::Instance->GetRecordingTimecode();
         obs_data_set_string(data, "rec-timecode", tc);
-        bfree((void*)tc);
+        bfree((void *)tc);
     }
 
     req->SendOKResponse(data);
@@ -50,7 +51,8 @@
  * @category streaming
  * @since 0.3
  */
- void WSRequestHandler::HandleStartStopStreaming(WSRequestHandler* req) {
+void WSRequestHandler::HandleStartStopStreaming(WSRequestHandler *req)
+{
     if (obs_frontend_streaming_active())
         HandleStopStreaming(req);
     else
@@ -63,7 +65,7 @@
  *
  * @param {Object (optional)} `stream` Special stream configuration. Please note: these won't be saved to OBS' configuration.
  * @param {String (optional)} `stream.type` If specified ensures the type of stream matches the given type (usually 'rtmp_custom' or 'rtmp_common'). If the currently configured stream type does not match the given stream type, all settings must be specified in the `settings` object or an error will occur when starting the stream.
- * @param {Object (optional)} `stream.metadata` Adds the given object parameters as encoded query string parameters to the 'key' of the RTMP stream. Used to pass data to the RTMP service about the streaming. May be any String, Numeric, or Boolean field. 
+ * @param {Object (optional)} `stream.metadata` Adds the given object parameters as encoded query string parameters to the 'key' of the RTMP stream. Used to pass data to the RTMP service about the streaming. May be any String, Numeric, or Boolean field.
  * @param {Object (optional)} `stream.settings` Settings for the stream.
  * @param {String (optional)} `stream.settings.server` The publish URL.
  * @param {String (optional)} `stream.settings.key` The publish key of the stream.
@@ -76,7 +78,8 @@
  * @category streaming
  * @since 4.1.0
  */
- void WSRequestHandler::HandleStartStreaming(WSRequestHandler* req) {
+void WSRequestHandler::HandleStartStreaming(WSRequestHandler *req)
+{
     if (obs_frontend_streaming_active() == false) {
         OBSService configuredService = obs_frontend_get_streaming_service();
         OBSService newService = nullptr;
@@ -100,9 +103,8 @@
             //Supporting adding metadata parameters to key query string
             QString query = Utils::ParseDataToQueryString(newMetadata);
             if (!query.isEmpty()
-                    && obs_data_has_user_value(newSettings, "key"))
-            {
-                const char* key = obs_data_get_string(newSettings, "key");
+                    && obs_data_has_user_value(newSettings, "key")) {
+                const char *key = obs_data_get_string(newSettings, "key");
                 int keylen = strlen(key);
 
                 bool hasQuestionMark = false;
@@ -137,14 +139,13 @@
                 obs_data_apply(updatedSettings, newSettings); //then apply the settings from the request should they exist
 
                 newService = obs_service_create(
-                    newType.toUtf8(), STREAM_SERVICE_ID,
-                    updatedSettings, csHotkeys);
-            }
-            else {
+                                 newType.toUtf8(), STREAM_SERVICE_ID,
+                                 updatedSettings, csHotkeys);
+            } else {
                 // Service type changed: override service settings
                 newService = obs_service_create(
-                    newType.toUtf8(), STREAM_SERVICE_ID,
-                    newSettings, csHotkeys);
+                                 newType.toUtf8(), STREAM_SERVICE_ID,
+                                 newSettings, csHotkeys);
             }
 
             obs_frontend_set_streaming_service(newService);
@@ -172,7 +173,8 @@
  * @category streaming
  * @since 4.1.0
  */
-void WSRequestHandler::HandleStopStreaming(WSRequestHandler* req) {
+void WSRequestHandler::HandleStopStreaming(WSRequestHandler *req)
+{
     if (obs_frontend_streaming_active() == true) {
         obs_frontend_streaming_stop();
         req->SendOKResponse();
@@ -183,7 +185,7 @@ void WSRequestHandler::HandleStopStreaming(WSRequestHandler* req) {
 
 /**
  * Sets one or more attributes of the current streaming server settings. Any options not passed will remain unchanged. Returns the updated settings in response. If 'type' is different than the current streaming service type, all settings are required. Returns the full settings of the stream (the same as GetStreamSettings).
- * 
+ *
  * @param {String} `type` The type of streaming service configuration, usually `rtmp_custom` or `rtmp_common`.
  * @param {Object} `settings` The actual settings of the stream.
  * @param {String (optional)} `settings.server` The publish URL.
@@ -198,7 +200,8 @@ void WSRequestHandler::HandleStopStreaming(WSRequestHandler* req) {
  * @category streaming
  * @since 4.1.0
  */
- void WSRequestHandler::HandleSetStreamSettings(WSRequestHandler* req) {
+void WSRequestHandler::HandleSetStreamSettings(WSRequestHandler *req)
+{
     OBSService service = obs_frontend_get_streaming_service();
 
     OBSDataAutoRelease requestSettings = obs_data_get_obj(req->data, "settings");
@@ -213,7 +216,7 @@ void WSRequestHandler::HandleStopStreaming(WSRequestHandler* req) {
     if (requestedType != nullptr && requestedType != serviceType) {
         OBSDataAutoRelease hotkeys = obs_hotkeys_save_service(service);
         service = obs_service_create(
-            requestedType.toUtf8(), STREAM_SERVICE_ID, requestSettings, hotkeys);
+                      requestedType.toUtf8(), STREAM_SERVICE_ID, requestSettings, hotkeys);
     } else {
         // If type isn't changing, we should overlay the settings we got
         // to the existing settings. By doing so, you can send a request that
@@ -261,10 +264,11 @@ void WSRequestHandler::HandleStopStreaming(WSRequestHandler* req) {
  * @category streaming
  * @since 4.1.0
  */
-void WSRequestHandler::HandleGetStreamSettings(WSRequestHandler* req) {
+void WSRequestHandler::HandleGetStreamSettings(WSRequestHandler *req)
+{
     OBSService service = obs_frontend_get_streaming_service();
 
-    const char* serviceType = obs_service_get_type(service);
+    const char *serviceType = obs_service_get_type(service);
     OBSDataAutoRelease settings = obs_service_get_settings(service);
 
     OBSDataAutoRelease response = obs_data_create();
@@ -282,7 +286,8 @@ void WSRequestHandler::HandleGetStreamSettings(WSRequestHandler* req) {
  * @category streaming
  * @since 4.1.0
  */
-void WSRequestHandler::HandleSaveStreamSettings(WSRequestHandler* req) {
+void WSRequestHandler::HandleSaveStreamSettings(WSRequestHandler *req)
+{
     obs_frontend_save_streaming_service();
     req->SendOKResponse();
 }
