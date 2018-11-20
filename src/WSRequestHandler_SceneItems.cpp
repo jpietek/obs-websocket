@@ -219,8 +219,15 @@ void WSRequestHandler::HandleSetSceneItemProperties(WSRequestHandler *req)
                 obs_data_set_obj(errorMessage, "position", positionError);
             }
         }
+
         obs_sceneitem_set_pos(sceneItem, &newPosition);
     }
+
+    if (obs_data_has_user_value(reqItem, "visible")) {
+        bool visible = obs_data_get_bool(reqItem, "visible");
+        obs_sceneitem_set_visible(sceneItem, visible);
+    }
+
 
     if (obs_data_has_user_value(reqItem, "rotation")) {
         obs_sceneitem_set_rot(sceneItem, (float)obs_data_get_double(reqItem, "rotation"));

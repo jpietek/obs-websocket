@@ -132,7 +132,7 @@ void WSRequestHandler::HandleSetSceneItemOrder(WSRequestHandler *req)
         return;
     }
 
-    ReorderParams *args = new ReorderParams(count);
+    ReorderParams *reorderParams = new ReorderParams(count);
     blog(LOG_INFO, "after scene check reserve");
 
     auto addInvisibleItems = [](obs_scene_t *scene, obs_sceneitem_t *item, void *params) -> bool {
@@ -150,12 +150,12 @@ void WSRequestHandler::HandleSetSceneItemOrder(WSRequestHandler *req)
         return true;
     };
 
-    obs_scene_enum_items(scene, addInvisibleItems, args);
+    obs_scene_enum_items(scene, addInvisibleItems, reorderParams);
 
-    blog(LOG_INFO, "empty slots size: %zu", args->emptySlots->size());
+    blog(LOG_INFO, "empty slots size: %zu", reorderParams->emptySlots->size());
     blog(LOG_INFO, "items got from req %zu", item_count);
 
-    if ((size_t) args->emptySlots->size() != item_count) {
+    if ((size_t) reorderParams->emptySlots->size() != item_count) {
         req->SendErrorResponse("request item count does not match visible item count in a scene");
         return;
     }
@@ -169,22 +169,22 @@ void WSRequestHandler::HandleSetSceneItemOrder(WSRequestHandler *req)
             return;
         }
 
-        int n = args->emptySlots->front();
+        int n = reorderParams->emptySlots->front();
         blog(LOG_INFO, "pop empty slots: %i", n);
-        args->newOrder->at(n) = sceneItem;
-        args->emptySlots->pop_front();
+        reorderParams->newOrder->at(n) = sceneItem;
+        reorderParams->emptySlots->pop_front();
         obs_sceneitem_release(sceneItem);
     }
 
-    blog(LOG_INFO, "new order size: %zu", args->newOrder->size());
-    bool res = obs_scene_reorder_items(scene, args->newOrder->data(), count);
+    blog(LOG_INFO, "new order size: %zu", reorderParams->newOrder->size());
+    bool res = obs_scene_reorder_items(scene, reorderParams->newOrder->data(), count);
     blog(LOG_INFO, "scene reorder result: %i", res);
 
     blog(LOG_INFO, "before scene release");
     obs_scene_release(scene);
 
     blog(LOG_INFO, "before args destructor");
-    delete args;
+    delete reorderParams;
 
     blog(LOG_INFO, "before send ok response");
     req->SendOKResponse();
